@@ -31,7 +31,6 @@ function addGlobalFlags(cmd: Command): Command {
     .option('--no-fuzzy', 'Disable typo correction')
     .option('--verbose', 'Show file-by-file actions')
     .option('--silent', 'Minimal output')
-    .option('--registry <url>', 'GitHub registry (owner/repo or full URL)')
     .option('--local <path>', 'Local registry path')
     .option('--tag <version>', 'Version pin')
     .option('--channel <channel>', 'Channel: stable, beta, dev')
@@ -57,7 +56,6 @@ function extractOpts(cmd: Command): GlobalOptions {
     noFuzzy: o.noFuzzy ?? !o.fuzzy, // --no-fuzzy sets fuzzy=false
     verbose: o.verbose,
     silent: o.silent,
-    registry: o.registry,
     local: o.local,
     tag: o.tag,
     channel: o.channel,
@@ -82,7 +80,7 @@ function extractOpts(cmd: Command): GlobalOptions {
 addGlobalFlags(
   program
     .command('setup <preset>')
-    .description('Create the full folder architecture for a preset (.claude, .github, .windsurf, .cursor, custom)')
+    .description('Setup a preset folder (.claude, .github, .windsurf, .cursor, custom)')
     .action(async (preset: string, _cmdOpts, cmd: Command) => {
       const opts = extractOpts(cmd.parent!);
       const { setupCommand } = await import('./commands/setup.js');
@@ -93,11 +91,13 @@ addGlobalFlags(
 addGlobalFlags(
   program
     .command('add <skills...>')
-    .description('Add one or more skills to the current project')
+    .description('Add skills to the project  [--all | --from-file <path> | --path <dir>]')
     .option('--from-file <path>', 'Read skill names from a file')
-    .option('--all', 'Install all skills from the registry')
+    .option('--all', 'Add all skills from the registry')
+    .option('--path <dir>', 'Target directory to install into')
     .action(async (skills: string[], cmdOpts, cmd: Command) => {
       const opts = extractOpts(cmd.parent!);
+      if (cmdOpts.path) opts.root = cmdOpts.path;
       const { addCommand } = await import('./commands/install.js');
       await addCommand(skills, { ...opts, fromFile: cmdOpts.fromFile, all: cmdOpts.all });
     }),
@@ -105,34 +105,8 @@ addGlobalFlags(
 
 addGlobalFlags(
   program
-    .command('download <skills...>')
-    .description('Fetch skills from the registry into a target folder')
-    .option('--to <path>', 'Target folder path')
-    .option('--all', 'Download all skills')
-    .action(async (skills: string[], cmdOpts, cmd: Command) => {
-      const opts = extractOpts(cmd.parent!);
-      const { downloadCommand } = await import('./commands/install.js');
-      await downloadCommand(skills, { ...opts, to: cmdOpts.to, all: cmdOpts.all });
-    }),
-);
-
-addGlobalFlags(
-  program
-    .command('install <skills...>')
-    .description('Install skills and generate native platform files')
-    .option('--from-file <path>', 'Read skill names from a file')
-    .option('--all', 'Install all skills')
-    .action(async (skills: string[], cmdOpts, cmd: Command) => {
-      const opts = extractOpts(cmd.parent!);
-      const { installCommand } = await import('./commands/install.js');
-      await installCommand(skills, { ...opts, fromFile: cmdOpts.fromFile, all: cmdOpts.all });
-    }),
-);
-
-addGlobalFlags(
-  program
     .command('list')
-    .description('List all available packages in the registry')
+    .description('List available skills  [-d [skills...]]')
     .option('-d, --description [skills...]', 'Show descriptions (optionally for specific skills only)')
     .action(async (cmdOpts, cmd: Command) => {
       const opts = extractOpts(cmd.parent!);
@@ -144,7 +118,7 @@ addGlobalFlags(
 addGlobalFlags(
   program
     .command('search <query>')
-    .description('Search for skills matching a query')
+    .description('Search for skills matching a keyword')
     .action(async (query: string, _cmdOpts, cmd: Command) => {
       const opts = extractOpts(cmd.parent!);
       const { searchCommand } = await import('./commands/query.js');
@@ -155,7 +129,7 @@ addGlobalFlags(
 addGlobalFlags(
   program
     .command('inspect <skill>')
-    .description('Show metadata and install path for a skill')
+    .description('Show full metadata for a skill')
     .action(async (skill: string, _cmdOpts, cmd: Command) => {
       const opts = extractOpts(cmd.parent!);
       const { inspectCommand } = await import('./commands/query.js');
@@ -166,7 +140,7 @@ addGlobalFlags(
 addGlobalFlags(
   program
     .command('update [skills...]')
-    .description('Update installed skills (all if none specified)')
+    .description('Update installed skills  (all if none specified)')
     .action(async (skills: string[], _cmdOpts, cmd: Command) => {
       const opts = extractOpts(cmd.parent!);
       const { updateCommand } = await import('./commands/manage.js');
@@ -177,7 +151,7 @@ addGlobalFlags(
 addGlobalFlags(
   program
     .command('remove <skills...>')
-    .description('Remove installed skills')
+    .description('Remove installed skills from the project')
     .action(async (skills: string[], _cmdOpts, cmd: Command) => {
       const opts = extractOpts(cmd.parent!);
       const { removeCommand } = await import('./commands/manage.js');
@@ -210,7 +184,7 @@ addGlobalFlags(
 addGlobalFlags(
   program
     .command('validate')
-    .description('Validate installed skills against lockfile')
+    .description('Validate installed skills against the lockfile')
     .action(async (_cmdOpts, cmd: Command) => {
       const opts = extractOpts(cmd.parent!);
       const { validateCommand } = await import('./commands/utility.js');

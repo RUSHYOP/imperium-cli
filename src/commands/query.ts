@@ -13,7 +13,7 @@ export async function listCommand(opts: GlobalOptions, description?: true | stri
   heading('Available skills');
 
   try {
-    const entries = await listPackages(opts.registry, opts.kind);
+    const entries = await listPackages(undefined, opts.kind);
 
     if (entries.length === 0) {
       info('No packages found in registry.');
@@ -61,7 +61,7 @@ export async function searchCommand(query: string, opts: GlobalOptions): Promise
   heading(`Searching for "${query}"`);
 
   try {
-    const results = await searchPackages(query, opts.registry);
+    const results = await searchPackages(query);
 
     if (results.length === 0) {
       info('No matching packages found.');
@@ -89,7 +89,7 @@ export async function inspectCommand(name: string, opts: GlobalOptions): Promise
   heading(`Inspecting ${name}`);
 
   try {
-    const { manifest, content } = await inspectPackage(name, opts.registry);
+    const { manifest, content } = await inspectPackage(name);
 
     info(`  Name:        ${chalk.bold(manifest.name)}`);
     info(`  Kind:        ${manifest.kind}`);

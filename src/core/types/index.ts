@@ -64,7 +64,6 @@ export interface GlobalOptions {
   noFuzzy?: boolean;
   verbose?: boolean;
   silent?: boolean;
-  registry?: string;
   local?: string;
   tag?: string;
   channel?: 'stable' | 'beta' | 'dev';

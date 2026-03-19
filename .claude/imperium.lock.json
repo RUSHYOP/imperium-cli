@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "preset": "claude",
+  "root": "/Users/admin/Codes/imperium-CLI/.claude",
+  "packages": {
+    "claude-api": {
+      "name": "claude-api",
+      "kind": "skill",
+      "version": "0.0.0",
+      "source": "github:RUSHYOP/imperium-cli",
+      "checksum": "82174e073f2a0387",
+      "installedPath": "/Users/admin/Codes/imperium-CLI/.claude/skills/claude-api",
+      "installedAt": "2026-03-19T18:37:59.728Z",
+      "lastSync": "2026-03-19T18:37:59.728Z"
+    }
+  }
+}

@@ -32,8 +32,6 @@ export function bestMatch(input: string, candidates: string[]): string | null {
 const COMMAND_NAMES = [
   'setup',
   'add',
-  'download',
-  'install',
   'list',
   'search',
   'inspect',
