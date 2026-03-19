@@ -1,0 +1,542 @@
+{
+  "_doc": "Pre-validated UIDL node templates for every common controlType. Copy these as starting points — all designer fields and required sub-objects are included. Replace placeholder IDs and values.",
+
+  "container": {
+    "id": "container-REPLACE",
+    "controlType": "container",
+    "containerType": "fluid",
+    "visibility": true,
+    "className": "",
+    "styles": "{\"backgroundColor\":\"\"}",
+    "currentLayout": "DESKTOP",
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": {} } },
+    "children": []
+  },
+
+  "row": {
+    "id": "row-REPLACE",
+    "controlType": "row",
+    "visibility": true,
+    "className": "",
+    "margin": "mb-two-s",
+    "styles": {},
+    "currentLayout": "DESKTOP",
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "alignItems": "center", "justifyContent": "start" } } },
+    "children": []
+  },
+
+  "column": {
+    "id": "col-REPLACE",
+    "controlType": "column",
+    "visibility": true,
+    "className": "",
+    "styles": {},
+    "currentLayout": "DESKTOP",
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } },
+    "children": []
+  },
+
+  "button": {
+    "id": "btn-REPLACE",
+    "controlType": "button",
+    "caption": "Button",
+    "variant": "contained",
+    "color": "primary",
+    "size": "small",
+    "disabled": false,
+    "visibility": true,
+    "hideCaption": false,
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } }
+  },
+
+  "heading": {
+    "id": "h-REPLACE",
+    "controlType": "heading",
+    "content": "Heading Text",
+    "tag": "h4",
+    "weight": "font-semibold",
+    "visibility": true,
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } }
+  },
+
+  "paragraph": {
+    "id": "p-REPLACE",
+    "controlType": "paragraph",
+    "content": "Paragraph text",
+    "size": "font-14",
+    "visibility": true,
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } }
+  },
+
+  "textbox": {
+    "id": "txt-REPLACE",
+    "controlType": "textbox",
+    "caption": "Field Label",
+    "value": "",
+    "name": "fieldName",
+    "placeholder": "",
+    "variant": "standard",
+    "size": "medium",
+    "disabled": false,
+    "visibility": true,
+    "hideCaption": false,
+    "enableInheritWidth": true,
+    "className": "wd-100",
+    "mandatory": false,
+    "error": false,
+    "success": false,
+    "isReadonly": false,
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } }
+  },
+
+  "checkbox": {
+    "id": "chk-REPLACE",
+    "controlType": "checkbox",
+    "caption": "Checkbox Label",
+    "checked": false,
+    "disabled": false,
+    "visibility": true,
+    "hideCaption": true,
+    "title": "Checkbox Label",
+    "hideTitle": false,
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } }
+  },
+
+  "switch": {
+    "id": "sw-REPLACE",
+    "controlType": "switch",
+    "caption": "Switch Label",
+    "checked": false,
+    "disabled": false,
+    "visibility": true,
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } }
+  },
+
+  "combo": {
+    "id": "cmb-REPLACE",
+    "controlType": "combo",
+    "caption": "Dropdown Label",
+    "placeholder": "Select...",
+    "disabled": false,
+    "visibility": true,
+    "hideCaption": false,
+    "options": [],
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } }
+  },
+
+  "datePicker": {
+    "id": "dp-REPLACE",
+    "controlType": "datePicker",
+    "caption": "Date",
+    "placeholder": "Select date",
+    "disabled": false,
+    "visibility": true,
+    "hideCaption": false,
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } }
+  },
+
+  "display": {
+    "id": "disp-REPLACE",
+    "controlType": "display",
+    "displayTitle": "Title",
+    "displayValue": "Value",
+    "type": "default",
+    "size": "medium",
+    "alignment": "left",
+    "displayPriority": "top",
+    "disabled": false,
+    "hideTitle": false,
+    "hideValue": false,
+    "overflow": false,
+    "icon": false,
+    "skipPreferences": false,
+    "visibility": true,
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } }
+  },
+
+  "badge": {
+    "id": "badge-REPLACE",
+    "controlType": "badge",
+    "content": "Badge",
+    "color": "primary",
+    "size": "small",
+    "badgeType": "normal",
+    "visibility": true,
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } }
+  },
+
+  "actionIcon": {
+    "id": "ai-REPLACE",
+    "controlType": "actionIcon",
+    "Icon": "FilterFilled",
+    "size": "medium",
+    "variant": "default",
+    "disabled": false,
+    "visibility": true,
+    "tooltip": "",
+    "badgeFieldProps": {
+      "controlType": "badge",
+      "size": "xsmall",
+      "color": "success"
+    },
+    "badgeCountConfig": {
+      "controlType": "badge",
+      "size": "xsmall",
+      "color": "success",
+      "content": "",
+      "borderType": "without-border",
+      "customColor": false,
+      "count": true
+    },
+    "badgeIconConfig": {
+      "controlType": "badge",
+      "size": "xsmall",
+      "badgeType": "icononly",
+      "iconOnly": "AddfileFilled",
+      "borderType": "without-border",
+      "visibility": true,
+      "customColor": false
+    },
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } }
+  },
+
+  "avatar": {
+    "id": "avatar-REPLACE",
+    "controlType": "avatar",
+    "type": "text",
+    "size": "medium",
+    "content": "AB",
+    "visibility": true,
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } }
+  },
+
+  "separator": {
+    "id": "sep-REPLACE",
+    "controlType": "separator",
+    "visibility": true,
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } }
+  },
+
+  "tab": {
+    "id": "tab-REPLACE",
+    "controlType": "tab",
+    "layout_direction": "horizontal",
+    "variant": "line",
+    "size": "medium",
+    "visibility": true,
+    "tabs": [
+      { "id": "tab-item-1", "title": "Tab 1", "visibility": true },
+      { "id": "tab-item-2", "title": "Tab 2", "visibility": true }
+    ],
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } }
+  },
+
+  "card": {
+    "id": "card-REPLACE",
+    "controlType": "card",
+    "type": "with-border",
+    "size": "medium",
+    "enableHeader": true,
+    "enableBody": true,
+    "enableFooter": false,
+    "enablePadding": true,
+    "visibility": true,
+    "header": {
+      "title": "Card Title",
+      "enableHeaderTemplate": false
+    },
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } },
+    "children": {
+      "header": [],
+      "body": [],
+      "footer": []
+    }
+  },
+
+  "panel": {
+    "id": "panel-REPLACE",
+    "controlType": "panel",
+    "enableborder": true,
+    "enablePadding": true,
+    "showHeader": false,
+    "hideCaption": true,
+    "size": "medium",
+    "visibility": true,
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } },
+    "children": []
+  },
+
+  "listview": {
+    "id": "lv-REPLACE",
+    "controlType": "listview",
+    "visibility": true,
+    "fieldDefs": [],
+    "items": [],
+    "toolSettings": {
+      "title": "",
+      "showTitle": false,
+      "showBadge": false,
+      "transparentToolbar": false,
+      "allowAdd": false,
+      "allowDelete": false,
+      "allowSettings": false,
+      "canExport": false,
+      "canUpload": "false",
+      "allowContextMenu": false,
+      "allowDeleteToolbar": false,
+      "allowPrint": false,
+      "allowFilterToolbar": false,
+      "search": {
+        "allowSearch": false,
+        "searchKey": "",
+        "searchPlaceholder": "Search..."
+      }
+    },
+    "rowSettings": {
+      "viewFullRow": false,
+      "enableEditRow": false,
+      "enableContextMenu": false
+    },
+    "noDataScreen": {
+      "enableNoDataScreen": false
+    },
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } }
+  },
+
+  "dialogModal": {
+    "id": "dlg-REPLACE",
+    "controlType": "dialogModal",
+    "title": "Dialog Title",
+    "visibility": false,
+    "fragmentId": "FG001",
+    "pageId": "",
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } }
+  },
+
+  "stepper": {
+    "id": "stp-REPLACE",
+    "controlType": "stepper",
+    "visibility": true,
+    "children": [
+      {
+        "id": "step-1",
+        "label": "Step 1",
+        "fragment": { "fragmentId": "FG001", "value": "" }
+      },
+      {
+        "id": "step-2",
+        "label": "Step 2",
+        "fragment": { "fragmentId": "FG002", "value": "" }
+      }
+    ],
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } }
+  },
+
+  "Hyperlink": {
+    "id": "link-REPLACE",
+    "controlType": "Hyperlink",
+    "caption": "Link Text",
+    "href": "",
+    "visibility": true,
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } }
+  },
+
+  "image": {
+    "id": "img-REPLACE",
+    "controlType": "image",
+    "src": "",
+    "alt": "",
+    "visibility": true,
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } }
+  },
+
+  "search": {
+    "id": "search-REPLACE",
+    "controlType": "search",
+    "placeholder": "Search...",
+    "visibility": true,
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } }
+  },
+
+  "circularProgress": {
+    "id": "cp-REPLACE",
+    "controlType": "circularProgress",
+    "type": "FullCircularProgress",
+    "size": "medium",
+    "value": 0,
+    "visibility": true,
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } }
+  },
+
+  "tag": {
+    "id": "tag-REPLACE",
+    "controlType": "tag",
+    "color": "primary",
+    "size": "small",
+    "tagItems": [{ "label": "Tag" }],
+    "visibility": true,
+    "isDragging": false,
+    "selectedComponentId": "",
+    "componentDropped": [],
+    "index": 0,
+    "accept": "Component",
+    "dropPosition": { "x": 0, "y": 0 },
+    "layout": { "colLayout": { "lg": { "col": 12 }, "md": { "col": 12 }, "sm": { "col": 12 } } }
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "name": "@rushy/imperium-cli",
+  "version": "0.1.0",
+  "description": "A package manager for agent context — install skills, reference packs, and presets for any AI agent ecosystem.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "imperium": "dist/bin.js"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RUSHYOP/imperium-cli.git"
+  },
+  "homepage": "https://github.com/RUSHYOP/imperium-cli#readme",
+  "bugs": {
+    "url": "https://github.com/RUSHYOP/imperium-cli/issues"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "start": "node dist/bin.js",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "cli",
+    "agent",
+    "skills",
+    "context",
+    "claude",
+    "copilot",
+    "windsurf",
+    "cursor",
+    "ai",
+    "package-manager"
+  ],
+  "author": "rushy",
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^8.3.2",
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "fastest-levenshtein": "^1.0.16",
+    "glob": "^10.3.0",
+    "gray-matter": "^4.0.3",
+    "ora": "^8.0.0",
+    "yaml": "^2.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0"
+  }
+}

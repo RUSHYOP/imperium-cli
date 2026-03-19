@@ -1,0 +1,52 @@
+{
+  "skill_name": "ts-backend-engineer",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I have a user service that talks to postgres. Right now it just does raw sql queries. I need you to refactor it to have proper types and error handling. Here's the current code:\n\n```typescript\nimport pg from 'pg';\nconst pool = new pg.Pool();\n\nexport async function getUser(id: string) {\n  const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);\n  return result.rows[0];\n}\n\nexport async function createUser(data: any) {\n  const result = await pool.query(\n    'INSERT INTO users (name, email) VALUES ($1, $2) RETURNING *',\n    [data.name, data.email]\n  );\n  return result.rows[0];\n}\n\nexport async function deleteUser(id: string) {\n  await pool.query('DELETE FROM users WHERE id = $1', [id]);\n}\n```",
+      "expected_output": "Refactored service with: branded UserId type or at minimum a proper string type, Result return types instead of throwing, typed user entity, injectable database dependency, input validation, proper error variants (not_found, constraint_violation, etc.), no `any`",
+      "files": [],
+      "expectations": [
+        "No use of `any` type anywhere in the output",
+        "Return types use a Result/Either pattern (discriminated union with ok/error or similar), not bare throws",
+        "User entity has a properly typed interface/type with specific fields, not Record or generic object",
+        "Database dependency is injectable (passed as parameter or via context), not imported as a singleton",
+        "Error types are specific variants (not_found, constraint_violation, etc.), not just generic Error",
+        "The id parameter uses a branded type or is at minimum validated, not raw unvalidated string",
+        "createUser input is validated with a schema or typed interface, not accepting any"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "write me a rate limiter middleware for an express app. it should limit by IP, support configurable windows and max requests, and work behind a reverse proxy. we're using redis for shared state across instances.",
+      "expected_output": "A typed middleware with: configurable options interface, Redis dependency injection, proper async error handling, X-RateLimit headers, trust proxy considerations, typed middleware signature, cleanup/connection handling",
+      "files": [],
+      "expectations": [
+        "Configuration is a properly typed interface with window, maxRequests, and other options — no loose Record or any",
+        "Redis client is injected, not imported as a global singleton",
+        "Handles Redis connection failures gracefully (doesn't crash the request if Redis is down)",
+        "Sets standard rate limit headers (X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset)",
+        "Addresses trust proxy / X-Forwarded-For for getting real client IP behind reverse proxy",
+        "Middleware function signature is properly typed with Request, Response, NextFunction",
+        "Uses atomic Redis operations (MULTI/EXEC or Lua script) to prevent race conditions",
+        "No use of `any` type"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "i need a typed event emitter for my app. it should be generic so different parts of the system can define their own event maps. needs to support async listeners, wildcard listeners, and once-off listeners. also want type safety so you cant emit an event with the wrong payload.\n\noh and make it testable please",
+      "expected_output": "A generic TypedEventEmitter<EventMap> class with: type-safe emit/on/off/once, async listener support, wildcard pattern, injectable or mockable design, proper generics that enforce payload types per event name",
+      "files": [],
+      "expectations": [
+        "Generic class/interface parameterized by an event map type (e.g., TypedEventEmitter<EventMap>)",
+        "Emitting an event with the wrong payload type produces a compile error — demonstrated or explained",
+        "Supports once-off listeners that automatically unsubscribe after first call",
+        "Supports async listeners and handles or surfaces their errors (not silently dropped promises)",
+        "Listener cleanup (off/removeListener) is implemented to prevent memory leaks",
+        "No use of `any` — event names and payloads are fully typed",
+        "Design allows dependency injection or mocking for tests",
+        "Wildcard or catch-all listener pattern is implemented"
+      ]
+    }
+  ]
+}

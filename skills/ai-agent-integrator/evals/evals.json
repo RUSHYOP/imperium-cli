@@ -1,0 +1,45 @@
+{
+  "skill_name": "ai-agent-integrator",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I have a Next.js 14 app (App Router) and I want to add an AI assistant that can help users query our PostgreSQL database using natural language. Users should see a chat widget in the bottom-right corner. The AI should show the SQL query it's about to run and the results as a table. It should only do SELECT queries, nothing that modifies data. We're using Anthropic's API.",
+      "expected_output": "Should create: (1) Agent config with system prompt scoped to SQL queries only, Anthropic provider, and read-only constraints. (2) Backend API route in app/api/agent/chat/route.ts with SSE streaming, tool definitions for queryDatabase/listTables/describeTable. (3) Frontend chat widget component using React with the useAgentChat hook pattern. (4) Should enforce SELECT-only in the queryDatabase tool. (5) System prompt should tell the agent to show SQL before running and format results as markdown tables. Should NOT include file editing or command running tools.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "i need to add an ai thing to my react app that can edit config files when users ask it to. like if a user says 'change the api timeout to 30 seconds' it should find the right config file and update it. but it should ask before making changes. im using openai. the backend is express.",
+      "expected_output": "Should handle the messy/casual input gracefully. Should create: (1) Express backend endpoint with SSE streaming. (2) OpenAI provider integration. (3) Tool definitions for readFile, editFile, listDirectory with editFile marked as requiresApproval. (4) Approval flow implementation — the agent sends an approval_required event, frontend shows approve/reject buttons, backend waits via ApprovalStore pattern. (5) Agent config with allowedPaths constraining to config files only (not src/). (6) System prompt instructing the agent to read the file first, explain the change, then request approval. (7) Path sanitization to prevent directory traversal.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "We have a Vue 3 application and want to integrate a documentation assistant that can search our codebase and answer questions about our architecture. It should be read-only — no file modifications at all. We want to use a local Ollama instance running llama3.1 because our code is proprietary and can't leave our network. Can you set this up with streaming?",
+      "expected_output": "Should create: (1) Ollama local provider integration instead of cloud APIs. (2) Vue 3 composable (useAgentChat) pattern for the frontend. (3) Backend with read-only tools only — readFile, searchCode, listDirectory. No write tools at all. (4) No approval flow needed since everything is read-only. (5) System prompt for a documentation/architecture assistant. (6) Should handle Ollama-specific considerations: local URL (localhost:11434), potential latency warnings, note about tool calling support varying by model.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "I want to build a multi-agent system for our internal platform. One agent handles database queries, another reviews pull requests, and a third manages deployments. There should be a router that figures out which agent to use based on what the user says. The whole thing needs to be embedded in our existing React + Express app with proper auth (we use JWT).",
+      "expected_output": "Should create: (1) Multi-agent router configuration with a lightweight model for routing. (2) Three separate agent configs with distinct system prompts, tool sets, and constraints. (3) Router logic that classifies the user message and delegates to the right specialist. (4) Shared infrastructure — single chat endpoint, single frontend, agent switching transparent to user. (5) JWT auth middleware for the API endpoints. (6) Should clearly explain the added complexity and suggest starting with a single agent first if scope permits.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "I already have a chat endpoint at /api/chat that calls OpenAI and streams responses back, but it's just basic Q&A — no tool calling. I want to add the ability for the agent to read and modify files in our project's public/content/ directory. Users should be able to say things like 'update the about page heading' and the agent should find the right file, make the change, and confirm. But ONLY in public/content/ — nowhere else.",
+      "expected_output": "Should recognize this is an enhancement to an existing setup, not a greenfield build. Should: (1) Add tool definitions to the existing LLM call (readFile, editFile, listDirectory). (2) Add the tool execution loop to the existing endpoint. (3) Constrain allowedPaths to ['public/content/'] only with path sanitization. (4) Add approval flow for editFile. (5) Update the frontend to handle status and approval events. (6) Should NOT rewrite the existing endpoint from scratch — extend it. Should note security implications clearly."
+    },
+    {
+      "id": 6,
+      "prompt": "Can you help me build a vanilla JS chat widget that I can embed on any website with a single script tag? No React, no Vue, just plain JavaScript. It should connect to my backend at api.myapp.com/chat and stream responses. I want it to look like those Intercom widgets.",
+      "expected_output": "Should create: (1) Self-contained vanilla JS widget that can be embedded via <script> tag. (2) CSS-in-JS or inline styles (no external stylesheet dependency). (3) Floating button in bottom-right that opens the chat panel. (4) SSE streaming from the specified backend URL. (5) CORS considerations since the widget runs on different domains than the API. (6) Should be a single file or small bundle. Should NOT introduce React/Vue/any framework. Should handle the cross-origin API call pattern.",
+      "files": []
+    },
+    {
+      "id": 7,
+      "prompt": "I need to add an AI agent to my e-commerce platform that helps customer service reps. The agent should be able to look up orders, check inventory, and process refunds — but refunds need manager approval. It should output responses in the chat for the rep to read to the customer, but the actual refund processing happens server-side through our payment API. We're on Next.js with Stripe for payments.",
+      "expected_output": "Should create: (1) Agent config tailored to customer service — system prompt focused on being helpful to the rep, not the end customer. (2) Tools: lookupOrder (read), checkInventory (read), processRefund (write, requires approval). (3) Approval flow where the refund request goes to a manager, not just the rep. (4) Integration with Stripe's refund API in the processRefund tool. (5) Clear separation: text responses are what the rep tells the customer, backend actions are the actual operations. (6) Rate limiting and audit logging for financial operations. (7) Should emphasize security for payment-related tool calls."
+    }
+  ]
+}
