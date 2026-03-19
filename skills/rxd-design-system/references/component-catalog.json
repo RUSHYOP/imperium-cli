@@ -1,0 +1,690 @@
+{
+  "_doc": "Lightweight lookup table for the agent — maps each UIDL controlType to its React name, category, key props, and composition rules. Use this to quickly identify which component to use and how it composes.",
+
+  "button": {
+    "reactName": "NbButton",
+    "controlType": "button",
+    "category": "action",
+    "variants": ["contained", "outlined", "text"],
+    "sizes": ["xsmall", "small", "medium", "large"],
+    "colors": ["primary", "default", "secondary", "warning", "positive", "negative", "neutral"],
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "actionIcon": {
+    "reactName": "NbActionIcon",
+    "controlType": "actionIcon",
+    "category": "action",
+    "sizes": ["small", "medium", "large"],
+    "colors": ["default", "primary", "secondary", "success", "error", "warning", "info"],
+    "requiredProps": ["id", "Icon", "badgeFieldProps", "badgeCountConfig", "badgeIconConfig"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none",
+    "criticalNote": "MUST include all 3 badge config objects or runtime crashes"
+  },
+  "heading": {
+    "reactName": "NbHeading",
+    "controlType": "heading",
+    "category": "typography",
+    "tags": ["h1", "h2", "h3", "h4", "h5", "h6"],
+    "weights": ["normal", "bold", "lighter", "bolder", "font-semibold"],
+    "requiredProps": ["id", "content"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none",
+    "gotcha": "Use 'content' not 'caption' for display text; use 'tag' not 'variant' for heading level"
+  },
+  "paragraph": {
+    "reactName": "NbParagraph",
+    "controlType": "paragraph",
+    "category": "typography",
+    "sizes": ["font-12", "font-13", "font-14", "font-16"],
+    "requiredProps": ["id", "content"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none",
+    "gotcha": "Use 'content' not 'caption' for display text"
+  },
+  "label": {
+    "reactName": "NbLabel",
+    "controlType": "label",
+    "category": "typography",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "textbox": {
+    "reactName": "NbTextbox",
+    "controlType": "textbox",
+    "category": "input",
+    "variants": ["standard", "outlined", "filled"],
+    "sizes": ["small", "medium", "large"],
+    "requiredProps": ["id", "value", "name"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none",
+    "gotcha": "Add enableInheritWidth: true and className: 'wd-100' for full-width"
+  },
+  "textarea": {
+    "reactName": "NbTextarea",
+    "controlType": "textarea",
+    "category": "input",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "numeric": {
+    "reactName": "NbNumeric",
+    "controlType": "numeric",
+    "category": "input",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "checkbox": {
+    "reactName": "NbCheckbox",
+    "controlType": "checkbox",
+    "category": "input",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none",
+    "gotcha": "For inline label: hideCaption: true, title: 'text', hideTitle: false"
+  },
+  "switch": {
+    "reactName": "NbSwitch",
+    "controlType": "switch",
+    "category": "input",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "radio": {
+    "reactName": "NbRadio",
+    "controlType": "radio",
+    "category": "input",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "radioGroup": {
+    "reactName": "NbRadioGroup",
+    "controlType": "radioGroup",
+    "category": "input",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "combo": {
+    "reactName": "NbCombo",
+    "controlType": "combo",
+    "category": "input",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "dropdown": {
+    "reactName": "NbDropdown",
+    "controlType": "dropdown",
+    "category": "input",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "multiSelect": {
+    "reactName": "NbMultiSelect",
+    "controlType": "multiSelect",
+    "category": "input",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "autosuggest": {
+    "reactName": "NbAutosuggest",
+    "controlType": "autosuggest",
+    "category": "input",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "datePicker": {
+    "reactName": "NbDatePicker",
+    "controlType": "datePicker",
+    "category": "input",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "dateRangePicker": {
+    "reactName": "NbDateRangePicker",
+    "controlType": "dateRangePicker",
+    "category": "input",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "dateTimepicker": {
+    "reactName": "NbDateTimePicker",
+    "controlType": "dateTimepicker",
+    "category": "input",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "timePicker": {
+    "reactName": "NbTimePicker",
+    "controlType": "timePicker",
+    "category": "input",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "search": {
+    "reactName": "NbSearch",
+    "controlType": "search",
+    "category": "input",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "phone": {
+    "reactName": "NbPhone",
+    "controlType": "phone",
+    "category": "input",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "pattern": {
+    "reactName": "NbPattern",
+    "controlType": "pattern",
+    "category": "input",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "rating": {
+    "reactName": "NbRating",
+    "controlType": "rating",
+    "category": "input",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "colorpicker": {
+    "reactName": "NbColorpicker",
+    "controlType": "colorpicker",
+    "category": "input",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "display": {
+    "reactName": "NbDisplay",
+    "controlType": "display",
+    "category": "data-display",
+    "types": ["default", "form"],
+    "sizes": ["small", "medium", "large"],
+    "alignments": ["left", "center", "right"],
+    "requiredProps": ["id", "displayTitle", "displayValue", "type", "size", "alignment", "displayPriority"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none",
+    "gotcha": "Needs all defaults: type, size, alignment, displayPriority, disabled, hideTitle, hideValue, overflow, icon, skipPreferences"
+  },
+  "badge": {
+    "reactName": "NbBadge",
+    "controlType": "badge",
+    "category": "data-display",
+    "sizes": ["xsmall", "small", "medium", "large"],
+    "colors": ["primary", "secondary", "success", "error", "warning", "info"],
+    "badgeTypes": ["normal", "icononly"],
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "tag": {
+    "reactName": "NbTag",
+    "controlType": "tag",
+    "category": "data-display",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "avatar": {
+    "reactName": "NbAvatar",
+    "controlType": "avatar",
+    "category": "media",
+    "types": ["text", "icon", "image"],
+    "sizes": ["xsmall", "small", "medium", "large", "xlarge"],
+    "statuses": ["online", "offline", "away", "active", "inactive", "blocked"],
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "avatarGroup": {
+    "reactName": "NbAvatarGroup",
+    "controlType": "avatarGroup",
+    "category": "media",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "image": {
+    "reactName": "NbImage",
+    "controlType": "image",
+    "category": "media",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "video": {
+    "reactName": "NbVideo",
+    "controlType": "video",
+    "category": "media",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "icon": {
+    "reactName": "NbIcon",
+    "controlType": "icon",
+    "category": "media",
+    "requiredProps": ["id", "iconKey"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none",
+    "warning": "May render empty in runtime if icon library not loaded"
+  },
+  "card": {
+    "reactName": "NbCard",
+    "controlType": "card",
+    "category": "surface",
+    "types": ["with-border", "with-shadow", "without-border-shadow"],
+    "sizes": ["small", "medium", "large", "xlarge"],
+    "requiredProps": ["id"],
+    "headerFooterFixed": true,
+    "bodyComposable": true,
+    "childrenPattern": "named-slot",
+    "slots": ["header", "body", "footer"],
+    "compositionRule": "Header/footer configured via props only (header.title, enableHeader, enableFooter, etc.). Body accepts Container → Row → Column → Leaf hierarchy."
+  },
+  "panel": {
+    "reactName": "NbPanel",
+    "controlType": "panel",
+    "category": "surface",
+    "requiredProps": ["id"],
+    "headerFooterFixed": true,
+    "bodyComposable": true,
+    "childrenPattern": "flat",
+    "compositionRule": "Header configured via props (header.title, showHeader, enableHeaderTemplate). Body is flat children array following Container → Row → Column → Leaf."
+  },
+  "accordion": {
+    "reactName": "NbAccordion",
+    "controlType": "accordion",
+    "category": "surface",
+    "requiredProps": ["id"],
+    "headerFooterFixed": true,
+    "bodyComposable": true,
+    "childrenPattern": "flat",
+    "compositionRule": "Each accordion item header is configured via item props. Body content is flat children."
+  },
+  "tab": {
+    "reactName": "NbTab",
+    "controlType": "tab",
+    "category": "navigation",
+    "variants": ["line", "contained"],
+    "layouts": ["horizontal", "vertical"],
+    "sizes": ["small", "medium", "large"],
+    "requiredProps": ["id", "tabs"],
+    "headerFooterFixed": true,
+    "bodyComposable": true,
+    "childrenPattern": "keyed",
+    "compositionRule": "Tab headers configured via tabs array props. Tab content keyed by tab ID, each follows Container → Row → Column → Leaf."
+  },
+  "dialogModal": {
+    "reactName": "NbDialogModal",
+    "controlType": "dialogModal",
+    "category": "overlay",
+    "requiredProps": ["id"],
+    "headerFooterFixed": true,
+    "bodyComposable": true,
+    "childrenPattern": "fragment",
+    "compositionRule": "Dialog title/header via props. Body content via fragmentId + pageId for separate UIDL file."
+  },
+  "stepper": {
+    "reactName": "NbStepper",
+    "controlType": "stepper",
+    "category": "navigation",
+    "requiredProps": ["id"],
+    "headerFooterFixed": true,
+    "bodyComposable": true,
+    "childrenPattern": "fragment",
+    "compositionRule": "Step labels via children array props. Step content via fragment.fragmentId + fragment.value for separate UIDL files."
+  },
+  "separator": {
+    "reactName": "NbSeparator",
+    "controlType": "separator",
+    "category": "layout",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "Hyperlink": {
+    "reactName": "NbHyperlink",
+    "controlType": "Hyperlink",
+    "category": "action",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none",
+    "gotcha": "Capital H required — 'Hyperlink' not 'hyperlink'"
+  },
+  "link": {
+    "reactName": "NbLink",
+    "controlType": "link",
+    "category": "action",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "splitButton": {
+    "reactName": "NbSplitButton",
+    "controlType": "splitButton",
+    "category": "action",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "floatingButton": {
+    "reactName": "NbFloatingButton",
+    "controlType": "floatingButton",
+    "category": "action",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "menuButton": {
+    "reactName": "NbMenuButton",
+    "controlType": "menuButton",
+    "category": "action",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "listview": {
+    "reactName": "ListView",
+    "controlType": "listview",
+    "category": "data-display",
+    "requiredProps": ["id", "toolSettings", "rowSettings", "noDataScreen"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none",
+    "gotcha": "Must include toolSettings, rowSettings, noDataScreen sub-objects"
+  },
+  "listviewInline": {
+    "reactName": "NbListviewInline",
+    "controlType": "listviewInline",
+    "category": "data-display",
+    "requiredProps": ["id", "maxToolbarIcons"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "table": {
+    "reactName": "NbTable",
+    "controlType": "table",
+    "category": "data-display",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "tree": {
+    "reactName": "NbTree",
+    "controlType": "tree",
+    "category": "data-display",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "timeline": {
+    "reactName": "NbTimeline",
+    "controlType": "timeline",
+    "category": "data-display",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "circularProgress": {
+    "reactName": "NbCircularProgress",
+    "controlType": "circularProgress",
+    "category": "feedback",
+    "types": ["FullCircularProgress", "HalfCircularProgress"],
+    "sizes": ["small", "medium", "large"],
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "progress": {
+    "reactName": "NbProgress",
+    "controlType": "progress",
+    "category": "feedback",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "progressBar": {
+    "reactName": "NbProgressBar",
+    "controlType": "progressBar",
+    "category": "feedback",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "loader": {
+    "reactName": "NbLoader",
+    "controlType": "loader",
+    "category": "feedback",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "emptyState": {
+    "reactName": "NbEmptyState",
+    "controlType": "emptyState",
+    "category": "feedback",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "breadcrumbs": {
+    "reactName": "NbBreadcrumbs",
+    "controlType": "breadcrumbs",
+    "category": "navigation",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "pagination": {
+    "reactName": "NbPagination",
+    "controlType": "pagination",
+    "category": "navigation",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "toggleButtonGroup": {
+    "reactName": "NbToggleButtonGroup",
+    "controlType": "toggleButtonGroup",
+    "category": "input",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "tooltip": {
+    "reactName": "NbTooltip",
+    "controlType": "tooltip",
+    "category": "overlay",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "popover": {
+    "reactName": "NbPopover",
+    "controlType": "popover",
+    "category": "overlay",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "quickhelp": {
+    "reactName": "NbQuickhelp",
+    "controlType": "quickhelp",
+    "category": "overlay",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "carousel": {
+    "reactName": "NbCarousel",
+    "controlType": "carousel",
+    "category": "media",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "cardContainer": {
+    "reactName": "NbCardContainer",
+    "controlType": "cardContainer",
+    "category": "surface",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": true,
+    "childrenPattern": "flat"
+  },
+  "Div": {
+    "reactName": "NbDiv",
+    "controlType": "Div",
+    "category": "layout",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": true,
+    "childrenPattern": "flat",
+    "gotcha": "Capital D required — 'Div' not 'div'"
+  },
+  "attachment": {
+    "reactName": "NbAttachment",
+    "controlType": "attachment",
+    "category": "input",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "imageAttach": {
+    "reactName": "NbImageAttach",
+    "controlType": "imageAttach",
+    "category": "input",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "iframe": {
+    "reactName": "NbIframe",
+    "controlType": "iframe",
+    "category": "media",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "weekCalendar": {
+    "reactName": "NbWeekCalendar",
+    "controlType": "weekCalendar",
+    "category": "input",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "inplacecalendar": {
+    "reactName": "NbInPlaceCalendar",
+    "controlType": "inplacecalendar",
+    "category": "input",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": false,
+    "childrenPattern": "none"
+  },
+  "form": {
+    "reactName": "NbForm",
+    "controlType": "form",
+    "category": "layout",
+    "requiredProps": ["id"],
+    "headerFooterFixed": false,
+    "bodyComposable": true,
+    "childrenPattern": "flat"
+  },
+
+  "_categories": {
+    "action": "Buttons, links, and interactive triggers",
+    "input": "Form fields and user input controls",
+    "data-display": "Read-only data presentation (tables, displays, badges, tags)",
+    "typography": "Text elements (headings, paragraphs, labels)",
+    "surface": "Content containers (cards, panels, accordions)",
+    "navigation": "Navigation elements (tabs, steppers, breadcrumbs, pagination)",
+    "media": "Images, video, icons, avatars, carousels",
+    "overlay": "Modals, dialogs, popovers, tooltips",
+    "feedback": "Loading, progress, empty states",
+    "layout": "Structural elements (separators, divs, forms)"
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "skill_name": "senior-frontend-engineer",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "ok so we have this old dashboard that uses Material UI v4 and we need to migrate it to shadcn/ui + Tailwind. The project already has Tailwind configured and shadcn installed (see components.json). Heres the component I need migrated first:\n\n```tsx\nimport React from 'react';\nimport { makeStyles } from '@material-ui/core/styles';\nimport Card from '@material-ui/core/Card';\nimport CardContent from '@material-ui/core/CardContent';\nimport Typography from '@material-ui/core/Typography';\nimport Button from '@material-ui/core/Button';\nimport CircularProgress from '@material-ui/core/CircularProgress';\nimport Alert from '@material-ui/lab/Alert';\n\nconst useStyles = makeStyles((theme) => ({\n  root: {\n    minWidth: 275,\n    marginBottom: theme.spacing(2),\n  },\n  title: {\n    fontSize: 14,\n    color: theme.palette.text.secondary,\n  },\n  value: {\n    fontSize: 32,\n    fontWeight: 'bold',\n    marginBottom: theme.spacing(1),\n  },\n  actions: {\n    display: 'flex',\n    justifyContent: 'space-between',\n    marginTop: theme.spacing(2),\n  },\n}));\n\nexport function MetricCard({ title, value, loading, error, onRefresh, onExport }) {\n  const classes = useStyles();\n\n  if (loading) return <Card className={classes.root}><CardContent><CircularProgress /></CardContent></Card>;\n  if (error) return <Card className={classes.root}><CardContent><Alert severity=\"error\">{error}</Alert></CardContent></Card>;\n\n  return (\n    <Card className={classes.root}>\n      <CardContent>\n        <Typography className={classes.title}>{title}</Typography>\n        <Typography className={classes.value}>{value}</Typography>\n        <div className={classes.actions}>\n          <Button variant=\"outlined\" size=\"small\" onClick={onRefresh}>Refresh</Button>\n          <Button variant=\"contained\" color=\"primary\" size=\"small\" onClick={onExport}>Export</Button>\n        </div>\n      </CardContent>\n    </Card>\n  );\n}\n```\n\nDont change the layout or behavior at all. Just swap the MUI stuff for shadcn equivalents. Our CLAUDE.md says to use Tailwind utility classes, no CSS-in-JS.",
+      "expected_output": "Migrated component using shadcn Card, Button, and Alert components with Tailwind utility classes. Layout visually identical. Props properly typed. Loading and error states preserved. No Material UI imports remaining.",
+      "files": [],
+      "expectations": [
+        "No Material UI imports remain — all replaced with shadcn/ui equivalents",
+        "Uses shadcn Card (CardContent, CardHeader/CardTitle if appropriate) and Button components",
+        "Uses Tailwind utility classes for styling, not makeStyles or any CSS-in-JS",
+        "Layout structure is preserved: title on top, value below, two buttons at bottom spaced apart",
+        "Loading state still renders a loading indicator inside the card",
+        "Error state still renders an alert/error message inside the card",
+        "Props are typed with a TypeScript interface (not using `any`)",
+        "Mentions or addresses the spacing difference between MUI's theme.spacing and Tailwind's spacing scale",
+        "The component follows the CLAUDE.md instruction about Tailwind utility classes"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "i need to add a new settings page to our app. its a Next.js 14 app router project using shadcn/ui and Tailwind. we use Zustand for client state and TanStack Query for server state. the page should let users update their profile (name, email, avatar upload) and notification preferences (email notifications on/off, push notifications on/off, digest frequency: daily/weekly/never). needs to work on mobile too.\n\ncheck the existing code patterns first, our other settings pages are in app/(dashboard)/settings/",
+      "expected_output": "A settings page component following existing project patterns. Uses shadcn form components, Zustand + TanStack Query as established, TypeScript interfaces for form data, proper loading/error states, responsive layout, accessible form with labels and error handling.",
+      "files": [],
+      "expectations": [
+        "Reads or references existing settings pages in app/(dashboard)/settings/ to match patterns",
+        "Uses App Router conventions (page.tsx, not pages/)",
+        "Uses shadcn/ui form components (Input, Switch, Select/RadioGroup, Button, Label)",
+        "Uses TanStack Query for fetching and mutating user settings (not raw fetch)",
+        "Uses Zustand only if there's client-side state that warrants it — doesn't force it",
+        "Form data is typed with a TypeScript interface, not `any`",
+        "All form fields have associated labels for accessibility",
+        "Handles loading state while fetching current settings",
+        "Handles error state if save fails, with an actionable user message",
+        "Responsive — works at mobile widths (not just desktop)",
+        "Avatar upload handles file type validation"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "we're migrating our React app from CSS Modules to Tailwind CSS. The project already has Tailwind set up but most components still use CSS Modules. Here's one that needs migrating:\n\n```tsx\nimport styles from './UserProfile.module.css';\nimport { useState } from 'react';\n\nexport function UserProfile({ user, onSave }) {\n  const [editing, setEditing] = useState(false);\n  const [name, setName] = useState(user.name);\n\n  return (\n    <div className={styles.container}>\n      <div className={styles.header}>\n        <img src={user.avatar} alt={user.name} className={styles.avatar} />\n        <div className={styles.info}>\n          {editing ? (\n            <input\n              className={styles.nameInput}\n              value={name}\n              onChange={(e) => setName(e.target.value)}\n            />\n          ) : (\n            <h2 className={styles.name}>{user.name}</h2>\n          )}\n          <span className={styles.role}>{user.role}</span>\n        </div>\n      </div>\n      <div className={styles.bio}>{user.bio}</div>\n      <div className={styles.actions}>\n        {editing ? (\n          <>\n            <button className={styles.saveBtn} onClick={() => { onSave({ ...user, name }); setEditing(false); }}>Save</button>\n            <button className={styles.cancelBtn} onClick={() => { setName(user.name); setEditing(false); }}>Cancel</button>\n          </>\n        ) : (\n          <button className={styles.editBtn} onClick={() => setEditing(true)}>Edit Profile</button>\n        )}\n      </div>\n    </div>\n  );\n}\n```\n\n```css\n/* UserProfile.module.css */\n.container {\n  max-width: 600px;\n  margin: 0 auto;\n  padding: 24px;\n  border: 1px solid #e5e7eb;\n  border-radius: 12px;\n}\n.header {\n  display: flex;\n  align-items: center;\n  gap: 16px;\n  margin-bottom: 16px;\n}\n.avatar {\n  width: 64px;\n  height: 64px;\n  border-radius: 50%;\n  object-fit: cover;\n}\n.info {\n  display: flex;\n  flex-direction: column;\n}\n.name {\n  font-size: 1.25rem;\n  font-weight: 600;\n  margin: 0;\n}\n.nameInput {\n  font-size: 1.25rem;\n  font-weight: 600;\n  padding: 4px 8px;\n  border: 1px solid #d1d5db;\n  border-radius: 6px;\n}\n.role {\n  font-size: 0.875rem;\n  color: #6b7280;\n}\n.bio {\n  color: #374151;\n  line-height: 1.6;\n  margin-bottom: 16px;\n}\n.actions {\n  display: flex;\n  gap: 8px;\n}\n.saveBtn {\n  background: #2563eb;\n  color: white;\n  padding: 8px 16px;\n  border-radius: 6px;\n  border: none;\n  cursor: pointer;\n  font-weight: 500;\n}\n.saveBtn:hover {\n  background: #1d4ed8;\n}\n.cancelBtn {\n  background: #f3f4f6;\n  color: #374151;\n  padding: 8px 16px;\n  border-radius: 6px;\n  border: none;\n  cursor: pointer;\n}\n.editBtn {\n  background: #2563eb;\n  color: white;\n  padding: 8px 16px;\n  border-radius: 6px;\n  border: none;\n  cursor: pointer;\n  font-weight: 500;\n}\n```\n\nmigrate this to tailwind. dont change the layout at ALL. pixel for pixel the same. also type the props properly.",
+      "expected_output": "Same component with Tailwind utility classes replacing all CSS module references. CSS module file should be removed. Layout preserved exactly. Props typed. Hover states preserved.",
+      "files": [],
+      "expectations": [
+        "No CSS module imports remain — styles.* references all replaced with Tailwind classes",
+        "CSS module file is no longer needed (mentioned or removed)",
+        "Layout is preserved: max-width 600px, centered, flex header with avatar + info, bio section, action buttons",
+        "Avatar is 64px (w-16 h-16), rounded-full, object-cover",
+        "Spacing matches: gap-4 for header, mb-4 for header-to-bio, gap-2 for buttons, p-6 for container",
+        "Colors use Tailwind equivalents: blue-600 for primary buttons, gray-100 for cancel, gray-500 for role text, gray-700 for bio",
+        "Hover states preserved on buttons (hover:bg-blue-700 or similar)",
+        "Props are typed — user object has a typed interface, onSave is properly typed",
+        "The CSS file values (padding: 24px, gap: 16px, etc.) are correctly mapped to Tailwind's scale (p-6, gap-4, etc.)",
+        "Border and border-radius preserved (border, rounded-xl)"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "I need a data table component for our admin panel. We use Vue 3 with Composition API and our design system uses PrimeVue components. The table needs sorting, pagination, and a search filter. It should display user data: name, email, role (admin/editor/viewer), status (active/suspended), and last login date.\n\ncheck our project conventions before building this. our CLAUDE.md should have the patterns.",
+      "expected_output": "A Vue 3 Composition API component using PrimeVue DataTable with sorting, pagination, and search. Follows project conventions. TypeScript interfaces for user data. Loading and empty states handled.",
+      "files": [],
+      "expectations": [
+        "Uses Vue 3 Composition API (<script setup lang='ts'>), not Options API",
+        "Uses PrimeVue DataTable component (not a custom table implementation)",
+        "Includes TypeScript interface for the user data shape (name, email, role, status, lastLogin)",
+        "Sorting is implemented via PrimeVue's built-in sorting, not custom logic",
+        "Pagination is implemented (PrimeVue Paginator or DataTable's built-in)",
+        "Search/filter functionality filters across relevant columns",
+        "Loading state is handled while data is being fetched",
+        "Empty state is handled (no users match filters)",
+        "Mentions reading CLAUDE.md or project conventions before building",
+        "Role and status columns use appropriate visual indicators (badges, colors) from PrimeVue",
+        "Date formatting for lastLogin column is handled properly"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "hey so we need to migrate our styling from styled-components to Tailwind. But heres the thing — some of our styled-components use dynamic styles based on props, like:\n\n```tsx\nconst ProgressBar = styled.div<{ percent: number; color: 'success' | 'warning' | 'danger' }>`\n  width: 100%;\n  height: 8px;\n  background: #e5e7eb;\n  border-radius: 4px;\n  position: relative;\n  overflow: hidden;\n  \n  &::after {\n    content: '';\n    position: absolute;\n    left: 0;\n    top: 0;\n    height: 100%;\n    width: ${props => props.percent}%;\n    background: ${props => {\n      switch(props.color) {\n        case 'success': return '#22c55e';\n        case 'warning': return '#eab308';\n        case 'danger': return '#ef4444';\n      }\n    }};\n    border-radius: 4px;\n    transition: width 0.3s ease;\n  }\n`;\n\nconst StatusBadge = styled.span<{ status: 'online' | 'offline' | 'away' }>`\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  padding: 2px 10px;\n  border-radius: 9999px;\n  font-size: 0.75rem;\n  font-weight: 500;\n  background: ${props => {\n    switch(props.status) {\n      case 'online': return '#dcfce7';\n      case 'offline': return '#f3f4f6';\n      case 'away': return '#fef9c3';\n    }\n  }};\n  color: ${props => {\n    switch(props.status) {\n      case 'online': return '#166534';\n      case 'offline': return '#6b7280';\n      case 'away': return '#854d0e';\n    }\n  }};\n  \n  &::before {\n    content: '';\n    width: 6px;\n    height: 6px;\n    border-radius: 50%;\n    background: ${props => {\n      switch(props.status) {\n        case 'online': return '#22c55e';\n        case 'offline': return '#9ca3af';\n        case 'away': return '#eab308';\n      }\n    }};\n  }\n`;\n```\n\nhow do you handle the dynamic width on ProgressBar? you cant do arbitrary values with string interpolation in tailwind classes right? figure it out without breaking the animation.",
+      "expected_output": "Migration approach that handles dynamic width via inline styles or CSS custom properties (not dynamic Tailwind class generation), while using Tailwind for all static styles. Color variants use Tailwind color classes. Transition preserved. Both components properly typed.",
+      "files": [],
+      "expectations": [
+        "ProgressBar's dynamic width uses inline style or CSS custom property (not dynamically generated Tailwind classes like `w-[${percent}%]` which won't work with JIT)",
+        "The transition/animation on width change is preserved (transition-all or similar)",
+        "ProgressBar's color variants use Tailwind color classes mapped from the hex values",
+        "StatusBadge's variant styles use a class mapping object or cn() utility, not dynamic string interpolation",
+        "The ::before pseudo-element on StatusBadge is handled (either with Tailwind before: modifier or a real element)",
+        "Props are properly typed with TypeScript interfaces",
+        "No styled-components imports remain",
+        "Explains WHY dynamic class generation doesn't work in Tailwind (JIT compiler needs to see full class names at build time)",
+        "The visual output is identical to the styled-components version"
+      ]
+    }
+  ]
+}

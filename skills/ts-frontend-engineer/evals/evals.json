@@ -1,0 +1,54 @@
+{
+  "skill_name": "ts-frontend-engineer",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I have this React component that fetches and displays a list of products. It works but the types are bad and it has no loading/error states. Please fix it:\n\n```tsx\nimport { useState, useEffect } from 'react';\n\nexport function ProductList() {\n  const [products, setProducts] = useState<any>([]);\n\n  useEffect(() => {\n    fetch('/api/products')\n      .then(res => res.json())\n      .then(data => setProducts(data));\n  }, []);\n\n  return (\n    <div>\n      <h1>Products</h1>\n      {products.map((p: any) => (\n        <div key={p.id}>\n          <span>{p.name}</span>\n          <span>${p.price}</span>\n        </div>\n      ))}\n    </div>\n  );\n}\n```",
+      "expected_output": "Refactored component with: typed Product interface, discriminated union for loading/error/success states, proper error handling for the fetch, accessible markup, extracted data fetching concern, no `any`",
+      "files": [],
+      "expectations": [
+        "Product type/interface with specific fields (id, name, price with correct types), not `any`",
+        "Component state models all three states: loading, error, success — using discriminated union or separate state variables",
+        "Error state is rendered with a user-facing message and ideally a retry mechanism",
+        "Loading state is rendered (spinner, skeleton, or loading text)",
+        "Data fetching is not a bare fetch-in-useEffect — either extracted to a custom hook, uses a library pattern, or at minimum handles cleanup/AbortController",
+        "No use of `any` anywhere",
+        "Semantic HTML is used — list elements use ul/li or similar, not bare divs",
+        "Empty state is handled (what if the array is empty?)"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "build me a reusable modal dialog component in typescript react. it should be accessible (keyboard nav, focus trap, screen reader announcements), support custom content, and handle escape to close. i dont want it to use any specific UI library, just plain react + typescript.",
+      "expected_output": "Accessible modal with: typed props, portal rendering, focus trap, escape key handling, aria attributes, scroll lock, proper ref forwarding, controlled open/close",
+      "files": [],
+      "expectations": [
+        "Renders via React portal (createPortal) to avoid z-index/overflow issues",
+        "Implements focus trap — focus stays within modal when tabbing, returns to trigger element on close",
+        "Sets appropriate ARIA attributes: role=dialog, aria-modal=true, aria-labelledby or aria-label",
+        "Handles Escape key to close the modal",
+        "Locks body scroll when modal is open",
+        "Props are properly typed with an interface — children, isOpen, onClose at minimum",
+        "No use of `any` type",
+        "Clicking the backdrop/overlay closes the modal",
+        "Supports ref forwarding or exposes a way to imperatively control focus"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I have a form that manages a lot of state and it's getting slow. Every keystroke in any field re-renders the entire form. There are 15 fields. Here's a simplified version:\n\n```tsx\nimport { useState } from 'react';\n\nexport function CheckoutForm({ onSubmit }: { onSubmit: (data: any) => void }) {\n  const [form, setForm] = useState({\n    firstName: '', lastName: '', email: '',\n    address1: '', address2: '', city: '',\n    state: '', zip: '', country: '',\n    cardNumber: '', cardExp: '', cardCvc: '',\n    phone: '', notes: '', promoCode: ''\n  });\n\n  const handleChange = (field: string, value: string) => {\n    setForm(prev => ({ ...prev, [field]: value }));\n  };\n\n  return (\n    <form onSubmit={(e) => { e.preventDefault(); onSubmit(form); }}>\n      <input value={form.firstName} onChange={e => handleChange('firstName', e.target.value)} />\n      <input value={form.email} onChange={e => handleChange('email', e.target.value)} />\n      {/* ... 13 more fields like this */}\n      <button type=\"submit\">Submit</button>\n    </form>\n  );\n}\n```\n\nfix the performance and type safety issues. dont add any external libraries.",
+      "expected_output": "Optimized form with: typed field names (no bare string), isolated re-renders per field, proper form validation types, accessible labels, memoization where appropriate, typed onSubmit payload",
+      "files": [],
+      "expectations": [
+        "Field names are typed — handleChange uses keyof FormData or a mapped type, not bare `string`",
+        "Re-renders are isolated so typing in one field doesn't re-render all 15 — via React.memo on child components, useRef for values, or uncontrolled inputs with refs",
+        "onSubmit parameter is properly typed (not `any`) with a specific form data interface",
+        "Form fields have associated labels (htmlFor + id or aria-label) for accessibility",
+        "No use of `any` type anywhere in the output",
+        "Validation is addressed — at minimum type-level (required fields, email format) or runtime validation",
+        "Submit handler prevents double submission or has some guard",
+        "The solution does not introduce external form libraries (user said no external libs)"
+      ]
+    }
+  ]
+}

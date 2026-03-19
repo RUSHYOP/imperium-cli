@@ -1,0 +1,43 @@
+{
+  "rootShape": "metadata_array",
+  "localAuthoring": {
+    "fileShape": "RComponentArrayType",
+    "rootStructure": "container -> row -> column -> leaf",
+    "projectsDir": "/Users/admin/Codes/uidl/projects"
+  },
+  "rowChildren": {
+    "container": [
+      "row"
+    ],
+    "row": [
+      "column"
+    ],
+    "column": "direct non-row children may use flex/alignment; direct row children should stay breakpoint-only"
+  },
+  "childrenPatterns": {
+    "flatArray": [
+      "container",
+      "row",
+      "column",
+      "panel",
+      "accordion",
+      "Div",
+      "form"
+    ],
+    "namedSlots": {
+      "card": [
+        "header",
+        "body",
+        "footer"
+      ]
+    },
+    "keyedChildren": [
+      "tab"
+    ]
+  },
+  "classes": {
+    "gridFoundation": "bootstrap_12_column",
+    "wrapperSpacing": "row margin, column padding, direct-leaf column flex only",
+    "inlineStylePolicy": "compatibility_only_no_custom_visual_styles"
+  }
+}
