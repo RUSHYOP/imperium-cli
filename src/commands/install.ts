@@ -109,12 +109,25 @@ async function installFlow(
     return;
   }
 
-  const target = await resolveTarget(opts);
-
+  // Resolve all skill names first (fuzzy match / validate) before prompting for target
+  const resolved: string[] = [];
   for (const rawName of names) {
     try {
-      const name = await resolveSkillName(rawName, opts);
+      resolved.push(await resolveSkillName(rawName, opts));
+    } catch (err: any) {
+      logError(`${rawName}: ${err.message}`);
+    }
+  }
 
+  if (resolved.length === 0) {
+    process.exitCode = 1;
+    return;
+  }
+
+  const target = await resolveTarget(opts);
+
+  for (const name of resolved) {
+    try {
       info(`Fetching ${name}...`);
       const pkg = await fetchPackage(name, opts.registry);
 
