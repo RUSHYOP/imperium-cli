@@ -41,7 +41,7 @@ export async function updateCommand(
 
     try {
       info(`Checking ${name}...`);
-      const pkg = await fetchPackage(name, opts.registry);
+      const pkg = await fetchPackage(name);
 
       if (pkg.checksum === lock.packages[name].checksum) {
         verbose(`${name}: already up to date.`);

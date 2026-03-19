@@ -77,7 +77,7 @@ export function installPackage(
     name: pkg.manifest.name,
     kind: pkg.manifest.kind,
     version: pkg.manifest.version,
-    source: opts.registry || 'github:RUSHYOP/imperium-cli',
+    source: 'github:RUSHYOP/imperium-cli',
     checksum: pkg.checksum,
     installedPath: pkgDir,
     installedAt: now,

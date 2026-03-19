@@ -1,11 +1,10 @@
 import type { GlobalOptions } from '../core/types/index.js';
 import { fetchPackage } from '../core/registry/index.js';
 import { installPackage } from '../core/installer/index.js';
-import { getAdapter } from '../adapters/index.js';
 import { resolveTarget } from '../utils/resolve-target.js';
 import { fuzzyMatch } from '../utils/fuzzy.js';
 import { listPackages } from '../core/registry/index.js';
-import { heading, success, warn, error as logError, info, verbose, list } from '../utils/log.js';
+import { heading, success, warn, error as logError, info, verbose } from '../utils/log.js';
 import { confirm } from '@inquirer/prompts';
 
 /** Parse skill names: supports space-separated and comma-separated. */
@@ -21,12 +20,12 @@ async function resolveSkillName(
 
   try {
     // Try exact fetch first
-    await fetchPackage(name, opts.registry);
+    await fetchPackage(name);
     return name;
   } catch {
     // Fuzzy match against registry
     try {
-      const all = await listPackages(opts.registry, opts.kind);
+      const all = await listPackages(undefined, opts.kind);
       const candidates = all.map((e) => e.name);
       const matches = fuzzyMatch(name, candidates);
 
@@ -58,41 +57,26 @@ async function resolveSkillName(
 }
 
 // ---------------------------------------------------------------------------
-// add / install — same logic, install also generates native files
+// add
 // ---------------------------------------------------------------------------
 
 export async function addCommand(
   names: string[],
   opts: GlobalOptions & { fromFile?: string; all?: boolean },
 ): Promise<void> {
-  return installFlow(names, opts, false);
+  return installFlow(names, opts);
 }
 
-export async function installCommand(
-  names: string[],
-  opts: GlobalOptions & { fromFile?: string; all?: boolean },
-): Promise<void> {
-  return installFlow(names, opts, true);
-}
 
-export async function downloadCommand(
-  names: string[],
-  opts: GlobalOptions & { to?: string; all?: boolean },
-): Promise<void> {
-  // `download --to` maps to `--root`
-  if (opts.to) opts.root = opts.to;
-  return installFlow(names, opts, false);
-}
 
 async function installFlow(
   rawNames: string[],
   opts: GlobalOptions & { fromFile?: string; all?: boolean },
-  renderNative: boolean,
 ): Promise<void> {
   let names: string[];
 
   if (opts.all) {
-    const all = await listPackages(opts.registry, opts.kind);
+    const all = await listPackages(undefined, opts.kind);
     names = all.map((e) => e.name);
     heading(`Installing all ${names.length} packages`);
   } else if (opts.fromFile) {
@@ -129,7 +113,7 @@ async function installFlow(
   for (const name of resolved) {
     try {
       info(`Fetching ${name}...`);
-      const pkg = await fetchPackage(name, opts.registry);
+      const pkg = await fetchPackage(name);
 
       const result = installPackage(pkg, target, opts);
 
@@ -145,17 +129,8 @@ async function installFlow(
       }
 
       success(`${name} v${pkg.manifest.version} installed (${result.files.length} files)`);
-
-      // Generate native platform files if this is `install` (not just `add`)
-      if (renderNative) {
-        const adapter = getAdapter(target.preset);
-        const nativeFiles = adapter.generateNativeFiles(pkg, target);
-        if (nativeFiles.length > 0) {
-          verbose(`Generated ${nativeFiles.length} native file(s) for ${target.preset}`);
-        }
-      }
     } catch (err: any) {
-      logError(`${rawName}: ${err.message}`);
+      logError(`${name}: ${err.message}`);
     }
   }
 }
