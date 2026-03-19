@@ -3,13 +3,19 @@ import type { GlobalOptions, PackageKind, PresetName } from './core/types/index.
 import { setLogOptions } from './utils/log.js';
 import { fuzzyCommand } from './utils/fuzzy.js';
 import { warn, error as logError } from './utils/log.js';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const pkg = JSON.parse(readFileSync(resolve(__dirname, '..', 'package.json'), 'utf-8'));
 
 const program = new Command();
 
 program
   .name('imperium')
   .description('A package manager for agent context — skills, reference packs, and presets.')
-  .version('0.1.0');
+  .version(pkg.version);
 
 // ---------------------------------------------------------------------------
 // Global flags
@@ -127,10 +133,11 @@ addGlobalFlags(
   program
     .command('list')
     .description('List all available packages in the registry')
-    .action(async (_cmdOpts, cmd: Command) => {
+    .option('-d, --description [skills...]', 'Show descriptions (optionally for specific skills only)')
+    .action(async (cmdOpts, cmd: Command) => {
       const opts = extractOpts(cmd.parent!);
       const { listCommand } = await import('./commands/query.js');
-      await listCommand(opts);
+      await listCommand(opts, cmdOpts.description);
     }),
 );
 

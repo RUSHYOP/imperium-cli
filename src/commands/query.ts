@@ -9,8 +9,8 @@ import { heading, info, dim, list as logList, success, error as logError } from 
 // list
 // ---------------------------------------------------------------------------
 
-export async function listCommand(opts: GlobalOptions): Promise<void> {
-  heading('Registry packages');
+export async function listCommand(opts: GlobalOptions, description?: true | string[]): Promise<void> {
+  heading('Available skills');
 
   try {
     const entries = await listPackages(opts.registry, opts.kind);
@@ -30,11 +30,20 @@ export async function listCommand(opts: GlobalOptions): Promise<void> {
       // no local target — fine, just don't mark any as installed
     }
 
+    // Determine which skills should show descriptions
+    const showDescAll = description === true;
+    const descFilter = Array.isArray(description)
+      ? new Set(description.map((s) => s.toLowerCase()))
+      : null;
+
     for (const entry of entries) {
       const tag = installed.has(entry.name) ? chalk.green(' [installed]') : '';
       const kindBadge = chalk.dim(`[${entry.kind}]`);
       info(`  ${chalk.bold(entry.name)} ${kindBadge} v${entry.version}${tag}`);
-      dim(`    ${entry.description}`);
+
+      if (showDescAll || descFilter?.has(entry.name.toLowerCase())) {
+        dim(`    ${entry.description}`);
+      }
     }
 
     info(`\n${entries.length} package(s) available.`);
