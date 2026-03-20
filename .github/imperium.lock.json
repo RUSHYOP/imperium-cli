@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "preset": "github",
+  "root": "/Users/admin/Codes/imperium-CLI/.github",
+  "packages": {
+    "Obsidian": {
+      "name": "Obsidian",
+      "kind": "skill",
+      "version": "0.0.0",
+      "source": "github:RUSHYOP/imperium-cli",
+      "checksum": "922f549702c5773e",
+      "installedPath": "/Users/admin/Codes/imperium-CLI/.github/skills/Obsidian",
+      "installedAt": "2026-03-20T07:21:05.554Z",
+      "lastSync": "2026-03-20T07:21:05.554Z"
+    }
+  }
+}

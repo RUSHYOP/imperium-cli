@@ -1,0 +1,59 @@
+<script setup lang="ts">
+const links = [{
+  label: 'Getting Started',
+  to: '/docs/getting-started/introduction'
+}, {
+  label: 'Commands',
+  to: '/docs/commands/overview'
+}, {
+  label: 'Concepts',
+  to: '/docs/concepts/skills'
+}]
+</script>
+
+<template>
+  <UApp>
+    <UHeader title="Imperium-CLI" to="/" :links="links">
+      <template #right>
+        <UColorModeButton />
+        <UButton
+          icon="i-simple-icons-github"
+          to="https://github.com/RUSHYOP/imperium-cli"
+          target="_blank"
+          variant="ghost"
+          color="neutral"
+        />
+      </template>
+    </UHeader>
+
+    <UMain>
+      <NuxtPage />
+    </UMain>
+
+    <UFooter>
+      <template #left>
+        <span class="text-sm text-muted">© 2025 Imperium-CLI</span>
+      </template>
+      <template #right>
+        <UButton
+          label="GitHub"
+          icon="i-simple-icons-github"
+          to="https://github.com/RUSHYOP/imperium-cli"
+          target="_blank"
+          variant="ghost"
+          color="neutral"
+          size="sm"
+        />
+        <UButton
+          label="npm"
+          icon="i-simple-icons-npm"
+          to="https://www.npmjs.com/package/@rushy/imperium-cli"
+          target="_blank"
+          variant="ghost"
+          color="neutral"
+          size="sm"
+        />
+      </template>
+    </UFooter>
+  </UApp>
+</template>
