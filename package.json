@@ -26,6 +26,7 @@
     "start": "node dist/bin.js",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
+    "postinstall": "node dist/postinstall.js",
     "prepublishOnly": "npm run build:registry && npm run build"
   },
   "keywords": [

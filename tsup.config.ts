@@ -20,4 +20,12 @@ export default defineConfig([
     sourcemap: false,
     splitting: false,
   },
+  {
+    entry: { postinstall: 'src/postinstall.ts' },
+    format: ['esm'],
+    target: 'node20',
+    minify: true,
+    sourcemap: false,
+    splitting: false,
+  },
 ]);
