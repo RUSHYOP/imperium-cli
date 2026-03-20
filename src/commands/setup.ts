@@ -4,6 +4,7 @@ import { getAdapter } from '../adapters/index.js';
 import { resolveTarget } from '../utils/resolve-target.js';
 import { writeLockfile, readLockfile } from '../core/lockfile/index.js';
 import { heading, success, info, list, verbose } from '../utils/log.js';
+import { addCommand } from './install.js';
 
 const PRESET_NAMES = ['claude', 'github', 'windsurf', 'cursor', 'custom'] as const;
 
@@ -16,7 +17,10 @@ function normalizePreset(raw: string): PresetArg {
   return 'custom';
 }
 
-export async function setupCommand(preset: string, opts: GlobalOptions): Promise<void> {
+export async function setupCommand(
+  preset: string,
+  opts: GlobalOptions & { with?: string[] },
+): Promise<void> {
   const presetName = normalizePreset(preset);
 
   // Resolve custom root if "custom" preset
@@ -57,4 +61,8 @@ export async function setupCommand(preset: string, opts: GlobalOptions): Promise
     `Skills directory: ${target.skillsDir}`,
     `Lockfile: ${target.rootDir}/imperium.lock.json`,
   ]);
+
+  if (opts.with && opts.with.length > 0) {
+    await addCommand(opts.with, { ...opts, root: target.rootDir });
+  }
 }
