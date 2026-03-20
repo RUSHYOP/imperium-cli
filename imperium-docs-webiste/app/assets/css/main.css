@@ -27,6 +27,13 @@ body {
   background-color: #050507;
 }
 
+/* ── Hero full-viewport height ───────────────────────────────────── */
+[data-slot="root"][data-orientation] {
+  min-height: calc(100dvh - 4rem);
+  display: flex;
+  align-items: center;
+}
+
 /* ── Animated hero mesh gradient ────────────────────────────────── */
 .hero-gradient {
   position: absolute;
@@ -99,16 +106,40 @@ body {
 }
 
 /* ── Feature cards (base — glow handled by plugin) ──────────────── */
-[class*="u-page-feature"] {
+.glow-card {
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 16px;
   backdrop-filter: blur(12px);
 }
-[class*="u-page-feature"]:hover {
+.glow-card:hover {
   transform: translateY(-2px);
 }
 
+/* ── Inline code inside feature cards ───────────────────────────── */
+[class*="u-page-feature"] code {
+  font-size: 0.8em;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-weight: 500;
+  background: rgba(139, 92, 246, 0.08);
+  color: #7c3aed;
+  border: 1px solid rgba(139, 92, 246, 0.12);
+  white-space: nowrap;
+}
+:root.dark [class*="u-page-feature"] code {
+  background: rgba(167, 139, 250, 0.10);
+  color: #a78bfa;
+  border-color: rgba(167, 139, 250, 0.15);
+}
+
 /* ── Code blocks ────────────────────────────────────────────────── */
+pre,
+pre code,
+pre code span,
+[class*="shiki"],
+[data-slot="code-block"] code {
+  text-align: left !important;
+}
 pre {
   border-radius: 14px !important;
   border: 1px solid rgba(139, 92, 246, 0.06) !important;
@@ -120,6 +151,20 @@ pre {
   border: 1px solid rgba(167, 139, 250, 0.08) !important;
   background: rgba(15, 15, 25, 0.7) !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* ── Steps component ────────────────────────────────────────────── */
+.border-s.ps-8 {
+  max-width: 52rem;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left !important;
+}
+.border-s.ps-8 h3,
+.border-s.ps-8 p,
+.border-s.ps-8 pre,
+.border-s.ps-8 code {
+  text-align: left !important;
 }
 
 /* ── Section dividers ───────────────────────────────────────────── */

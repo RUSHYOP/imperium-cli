@@ -22,9 +22,10 @@ export default defineAppConfig({
     },
     pageHero: {
       slots: {
-        root: 'py-20 sm:py-32 relative overflow-hidden',
+        root: 'relative overflow-hidden min-h-screen',
+        container: '!pt-56 sm:!pt-64 !pb-24 sm:!pb-32',
         title: 'font-extrabold sm:text-6xl lg:text-7xl tracking-tight leading-[1.06]',
-        description: 'text-lg sm:text-xl text-zinc-500 dark:text-zinc-400 max-w-2xl leading-relaxed'
+        description: 'text-lg sm:text-xl text-zinc-500 dark:text-zinc-400 max-w-2xl leading-relaxed mx-auto'
       }
     },
     pageSection: {
@@ -36,7 +37,19 @@ export default defineAppConfig({
     },
     pageFeature: {
       slots: {
-        root: 'p-6 rounded-2xl'
+        root: 'p-6 rounded-2xl text-left',
+        title: 'text-left',
+        description: 'text-left text-sm leading-relaxed'
+      }
+    },
+    prose: {
+      steps: {
+        base: 'ms-4 border-s border-default ps-8 [counter-reset:step] text-left'
+      },
+      pre: {
+        slots: {
+          base: 'group font-mono text-sm/6 border border-muted bg-muted rounded-md px-4 py-3 whitespace-pre-wrap break-words overflow-x-auto focus:outline-none text-left'
+        }
       }
     }
   }
