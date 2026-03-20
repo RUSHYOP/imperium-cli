@@ -1,0 +1,19 @@
+{
+  "name": "rxds-figma-mcp",
+  "description": "AI-assisted Figma design — execute plugin code, manage variables, components, screenshots, and RXDS component registry",
+  "command": "node",
+  "args": [
+    "{{RXDS_FIGMA_MCP_PATH}}"
+  ],
+  "env": {
+    "FIGMA_ACCESS_TOKEN": "{{FIGMA_ACCESS_TOKEN}}",
+    "RXDS_COMPONENTS_PATH": "{{RXDS_COMPONENTS_PATH}}",
+    "RXDS_FIGMA_MCP_CONFIG": "{{RXDS_FIGMA_MCP_CONFIG}}"
+  },
+  "placeholders": {
+    "RXDS_FIGMA_MCP_PATH": "Path to rxds-figma-mcp dist/mcp/index.js",
+    "FIGMA_ACCESS_TOKEN": "Your Figma personal access token",
+    "RXDS_COMPONENTS_PATH": "Path to RXDS components directory",
+    "RXDS_FIGMA_MCP_CONFIG": "Path to .rxds-figma-mcp.json config file"
+  }
+}

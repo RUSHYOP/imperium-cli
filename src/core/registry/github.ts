@@ -256,3 +256,118 @@ export async function inspectPackage(
 
   throw new Error(`Package '${name}' not found in registry.`);
 }
+
+// ---------------------------------------------------------------------------
+// MCP Registry
+// ---------------------------------------------------------------------------
+
+export interface McpEntry {
+  name: string;
+  description: string;
+  command: string;
+  args: string[];
+  env?: Record<string, string>;
+  placeholders?: Record<string, string>;
+}
+
+interface McpRegistryIndex {
+  version: number;
+  updated_at: string;
+  count: number;
+  mcps: McpEntry[];
+}
+
+function mcpRegistryUrl(cfg: RegistryConfig): string {
+  return rawUrl(cfg, 'mcp-registry.json');
+}
+
+async function fetchMcpRegistryIndex(cfg: RegistryConfig): Promise<McpRegistryIndex> {
+  return fetchJsonCached<McpRegistryIndex>(mcpRegistryUrl(cfg));
+}
+
+/** List all available MCP server templates. */
+export async function listMcps(): Promise<McpEntry[]> {
+  const cfg = getConfig();
+  const index = await fetchMcpRegistryIndex(cfg);
+  return index.mcps;
+}
+
+/** Search MCP templates by keyword. */
+export async function searchMcps(query: string): Promise<McpEntry[]> {
+  const all = await listMcps();
+  const q = query.toLowerCase();
+  return all.filter(
+    (m) =>
+      m.name.toLowerCase().includes(q) ||
+      m.description.toLowerCase().includes(q),
+  );
+}
+
+/** Get a single MCP template by name. */
+export async function getMcp(name: string): Promise<McpEntry> {
+  const all = await listMcps();
+  const entry = all.find((m) => m.name === name);
+  if (!entry) throw new Error(`MCP '${name}' not found in registry.`);
+  return entry;
+}
+
+// ---------------------------------------------------------------------------
+// Setup Preset Registry
+// ---------------------------------------------------------------------------
+
+export interface SetupPresetEntry {
+  name: string;
+  description: string;
+  adapter: string;
+  skills: string[];
+  mcps: string[];
+  files: string[];
+}
+
+interface PresetRegistryIndex {
+  version: number;
+  updated_at: string;
+  count: number;
+  presets: SetupPresetEntry[];
+}
+
+function presetRegistryUrl(cfg: RegistryConfig): string {
+  return rawUrl(cfg, 'preset-registry.json');
+}
+
+async function fetchPresetRegistryIndex(cfg: RegistryConfig): Promise<PresetRegistryIndex> {
+  return fetchJsonCached<PresetRegistryIndex>(presetRegistryUrl(cfg));
+}
+
+/** List all available setup presets. */
+export async function listSetupPresets(): Promise<SetupPresetEntry[]> {
+  const cfg = getConfig();
+  const index = await fetchPresetRegistryIndex(cfg);
+  return index.presets;
+}
+
+/** Search setup presets by keyword. */
+export async function searchSetupPresets(query: string): Promise<SetupPresetEntry[]> {
+  const all = await listSetupPresets();
+  const q = query.toLowerCase();
+  return all.filter(
+    (p) =>
+      p.name.toLowerCase().includes(q) ||
+      p.description.toLowerCase().includes(q),
+  );
+}
+
+/** Get a single setup preset by name. */
+export async function getSetupPreset(name: string): Promise<SetupPresetEntry> {
+  const all = await listSetupPresets();
+  const entry = all.find((p) => p.name === name);
+  if (!entry) throw new Error(`Setup preset '${name}' not found in registry.`);
+  return entry;
+}
+
+/** Fetch a single file from a setup preset directory. */
+export async function fetchPresetFile(presetName: string, filePath: string): Promise<string> {
+  const cfg = getConfig();
+  const url = rawUrl(cfg, `setup-presets/${presetName}/${filePath}`);
+  return fetchText(url);
+}

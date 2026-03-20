@@ -40,3 +40,6 @@ export function list(items: string[]): void {
     items.forEach((item) => console.log('  • ' + item));
   }
 }
+
+// Re-export chalk for use in help formatters
+export { chalk };

@@ -1,0 +1,13 @@
+{
+  "name": "obsidian",
+  "description": "Read, search, and manage notes in an Obsidian vault",
+  "command": "npx",
+  "args": [
+    "@mauricio.wolff/mcp-obsidian@latest",
+    "{{OBSIDIAN_VAULT_PATH}}"
+  ],
+  "env": {},
+  "placeholders": {
+    "OBSIDIAN_VAULT_PATH": "Absolute path to your Obsidian vault (e.g. /Users/you/Documents/my-vault)"
+  }
+}

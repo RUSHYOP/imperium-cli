@@ -84,3 +84,13 @@ export interface ResolvedTarget {
   rootDir: string;
   skillsDir: string;
 }
+
+/** A setup preset: a curated bundle of skills, MCPs, and files for a specific workflow. */
+export interface SetupPresetEntry {
+  name: string;
+  description: string;
+  adapter: PresetName;
+  skills: string[];
+  mcps: string[];
+  files: string[];
+}

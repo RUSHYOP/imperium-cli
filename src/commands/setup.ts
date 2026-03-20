@@ -1,43 +1,73 @@
 import { mkdirSync } from 'node:fs';
-import type { GlobalOptions } from '../core/types/index.js';
+import type { GlobalOptions, PresetName } from '../core/types/index.js';
 import { getAdapter } from '../adapters/index.js';
 import { resolveTarget } from '../utils/resolve-target.js';
 import { writeLockfile, readLockfile } from '../core/lockfile/index.js';
-import { heading, success, info, list, verbose } from '../utils/log.js';
+import { heading, success, info, list, verbose, error as logError } from '../utils/log.js';
 import { addCommand } from './install.js';
+import { getSetupPreset, type SetupPresetEntry } from '../core/registry/index.js';
+import { applyPreset } from './preset.js';
 
-const PRESET_NAMES = ['claude', 'github', 'windsurf', 'cursor', 'custom'] as const;
+const ADAPTER_NAMES = ['claude', 'github', 'windsurf', 'cursor', 'custom'] as const;
 
-type PresetArg = (typeof PRESET_NAMES)[number] | string;
+type AdapterArg = (typeof ADAPTER_NAMES)[number] | string;
 
-function normalizePreset(raw: string): PresetArg {
+function normalizeAdapter(raw: string): AdapterArg {
   // Strip leading dot: ".claude" → "claude"
   const cleaned = raw.replace(/^\./, '').toLowerCase();
-  if (PRESET_NAMES.includes(cleaned as any)) return cleaned as PresetArg;
+  if (ADAPTER_NAMES.includes(cleaned as any)) return cleaned as AdapterArg;
   return 'custom';
 }
 
 export async function setupCommand(
-  preset: string,
-  opts: GlobalOptions & { with?: string[] },
+  adapter: string | undefined,
+  opts: GlobalOptions & { with?: string[]; preset?: string },
 ): Promise<void> {
-  const presetName = normalizePreset(preset);
+  let adapterName: AdapterArg;
+  let setupPreset: SetupPresetEntry | null = null;
 
-  // Resolve custom root if "custom" preset
-  const isCustom = presetName === 'custom' || !PRESET_NAMES.includes(presetName as any);
+  // Resolve setup preset if specified
+  if (opts.preset) {
+    try {
+      setupPreset = await getSetupPreset(opts.preset);
+    } catch (err: any) {
+      logError(err.message);
+      process.exitCode = 1;
+      return;
+    }
+    adapterName = adapter ? normalizeAdapter(adapter) : setupPreset.adapter;
+  } else if (adapter) {
+    adapterName = normalizeAdapter(adapter);
+  } else {
+    logError(
+      "Provide an adapter name or --preset. Usage: imperium setup <adapter> [--preset <name>]",
+    );
+    process.exitCode = 1;
+    return;
+  }
+
+  // Resolve custom root if "custom" adapter
+  const isCustom =
+    adapterName === 'custom' || !ADAPTER_NAMES.includes(adapterName as any);
   const resolvedOpts: GlobalOptions = {
     ...opts,
-    target: isCustom ? 'custom' : (presetName as any),
-    root: isCustom ? (opts.root || preset) : undefined,
+    target: isCustom ? 'custom' : (adapterName as PresetName),
+    root: isCustom ? (opts.root || adapter) : undefined,
   };
 
   const target = await resolveTarget(resolvedOpts);
-  const adapter = getAdapter(target.preset);
+  const adapterObj = getAdapter(target.preset);
 
-  heading(`Setting up ${target.preset} preset`);
+  heading(`Setting up ${target.preset}${setupPreset ? ` with preset "${setupPreset.name}"` : ''}`);
 
   if (opts.dryRun) {
     info(`Would create: ${target.rootDir}`);
+    if (setupPreset) {
+      info(`Would apply preset: ${setupPreset.name}`);
+      info(`  Skills: ${setupPreset.skills.join(', ') || 'none'}`);
+      info(`  MCPs: ${setupPreset.mcps.join(', ') || 'none'}`);
+      info(`  Files: ${setupPreset.files.length}`);
+    }
     return;
   }
 
@@ -46,7 +76,7 @@ export async function setupCommand(
   mkdirSync(target.skillsDir, { recursive: true });
 
   // Scaffold with adapter
-  const dirs = adapter.scaffold(target.rootDir);
+  const dirs = adapterObj.scaffold(target.rootDir);
   verbose(`Created directories:`);
   dirs.forEach((d) => verbose(`  ${d}`));
 
@@ -62,6 +92,12 @@ export async function setupCommand(
     `Lockfile: ${target.rootDir}/imperium.lock.json`,
   ]);
 
+  // Apply setup preset (skills, MCPs, files)
+  if (setupPreset) {
+    await applyPreset(setupPreset, target.rootDir, opts);
+  }
+
+  // Install additional --with skills
   if (opts.with && opts.with.length > 0) {
     await addCommand(opts.with, { ...opts, root: target.rootDir });
   }
