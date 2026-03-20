@@ -30,27 +30,33 @@ const claudeAdapter: PresetAdapter = {
   },
 
   generateNativeFiles(pkg, target) {
+    // Only generate a Claude agent file for skills that explicitly declare
+    // themselves as agent-type via tags or a dedicated kind. This prevents
+    // all 121 skills from being written into .claude/agents/ on every install.
+    const isAgent =
+      pkg.manifest.tags?.includes('agent') ||
+      pkg.manifest.tags?.includes('claude-agent') ||
+      (pkg.manifest.targets?.includes('claude') && pkg.manifest.kind === 'skill');
+
+    if (!isAgent) return [];
+
     const files: string[] = [];
+    const agentDir = join(target.rootDir, 'agents');
+    mkdirSync(agentDir, { recursive: true });
+    const agentPath = join(agentDir, `${pkg.manifest.name}.md`);
 
-    // Generate a .claude/agents/<name>.md if the skill has agent-like content
-    if (pkg.manifest.kind === 'skill') {
-      const agentDir = join(target.rootDir, 'agents');
-      mkdirSync(agentDir, { recursive: true });
-      const agentPath = join(agentDir, `${pkg.manifest.name}.md`);
+    const content = [
+      '---',
+      `name: ${pkg.manifest.name}`,
+      `description: ${pkg.manifest.description}`,
+      '---',
+      '',
+      pkg.skillContent.trim(),
+    ].join('\n');
 
-      const content = [
-        '---',
-        `name: ${pkg.manifest.name}`,
-        `description: ${pkg.manifest.description}`,
-        '---',
-        '',
-        pkg.skillContent.trim(),
-      ].join('\n');
-
-      writeFileSync(agentPath, content + '\n', 'utf-8');
-      verbose(`Generated Claude agent file: ${agentPath}`);
-      files.push(agentPath);
-    }
+    writeFileSync(agentPath, content + '\n', 'utf-8');
+    verbose(`Generated Claude agent file: ${agentPath}`);
+    files.push(agentPath);
 
     return files;
   },

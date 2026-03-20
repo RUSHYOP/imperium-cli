@@ -1,4 +1,5 @@
 import { writeFileSync, mkdirSync, existsSync, rmSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { dirname } from 'node:path';
 import type { GlobalOptions } from '../core/types.js';
 import {
@@ -10,6 +11,13 @@ import {
 } from '../core/registry.js';
 import { getInstructionPath } from '../adapters/index.js';
 import { resolveTarget } from '../utils/resolve-target.js';
+import {
+  readLockfile,
+  writeLockfile,
+  upsertInstructionEntry,
+  removeInstructionEntry,
+  isInstructionInstalled,
+} from '../core/lockfile.js';
 import { heading, success, info, warn, error as logError, list } from '../utils/log.js';
 import { confirm } from '@inquirer/prompts';
 
@@ -90,8 +98,19 @@ export async function addInstructionsCommand(
   for (const name of names) {
     try {
       info(`Fetching instruction "${name}"...`);
-      const { content } = await fetchInstructionContent(name);
+      const { content, description } = await fetchInstructionContent(name);
       const destPath = getInstructionPath(target.preset, target.rootDir, name);
+      const contentChecksum = createHash('sha256').update(content).digest('hex').slice(0, 16);
+
+      // Check lockfile for existing install
+      const lock = readLockfile(target.rootDir);
+      if (isInstructionInstalled(lock, name) && !opts.force && !opts.overwrite) {
+        const existing = lock.instructions[name];
+        if (existing.checksum === contentChecksum) {
+          warn(`${name}: already installed (unchanged). Use --force to reinstall.`);
+          continue;
+        }
+      }
 
       if (existsSync(destPath) && !opts.force && !opts.overwrite) {
         if (opts.yes) {
@@ -115,6 +134,18 @@ export async function addInstructionsCommand(
 
       mkdirSync(dirname(destPath), { recursive: true });
       writeFileSync(destPath, content + '\n', 'utf-8');
+
+      // Track in lockfile
+      const updatedLock = upsertInstructionEntry(readLockfile(target.rootDir), {
+        name,
+        description,
+        source: 'github:RUSHYOP/imperium-cli',
+        checksum: contentChecksum,
+        installedPath: destPath,
+        installedAt: new Date().toISOString(),
+      });
+      writeLockfile(target.rootDir, updatedLock);
+
       success(`Installed instruction "${name}" → ${destPath}`);
     } catch (err: any) {
       logError(`${name}: ${err.message}`);
@@ -163,6 +194,11 @@ export async function removeInstructionsCommand(
     }
 
     rmSync(destPath, { force: true });
+
+    // Remove from lockfile
+    const updatedLock = removeInstructionEntry(readLockfile(target.rootDir), name);
+    writeLockfile(target.rootDir, updatedLock);
+
     success(`Removed instruction "${name}" from ${destPath}`);
   }
 }

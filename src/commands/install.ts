@@ -110,25 +110,36 @@ async function installFlow(
 
   const target = await resolveTarget(opts);
 
-  for (const name of resolved) {
+  // Fetch all packages concurrently, then install sequentially to avoid lockfile races
+  info(`Fetching ${resolved.length} package(s)...`);
+  const fetched = await Promise.allSettled(resolved.map((name) => fetchPackage(name)));
+
+  for (let i = 0; i < resolved.length; i++) {
+    const name = resolved[i]!;
+    const result = fetched[i]!;
+
+    if (result.status === 'rejected') {
+      logError(`${name}: ${result.reason?.message ?? result.reason}`);
+      continue;
+    }
+
+    const pkg = result.value;
+
     try {
-      info(`Fetching ${name}...`);
-      const pkg = await fetchPackage(name);
+      const installResult = installPackage(pkg, target, opts);
 
-      const result = installPackage(pkg, target, opts);
-
-      if (result.skipped) {
-        warn(`${name}: ${result.reason}`);
+      if (installResult.skipped) {
+        warn(`${name}: ${installResult.reason}`);
         continue;
       }
 
       if (opts.dryRun) {
-        info(`${name}: would write ${result.files.length} files:`);
-        result.files.forEach((f) => verbose(`  ${f}`));
+        info(`${name}: would write ${installResult.files.length} files:`);
+        installResult.files.forEach((f) => verbose(`  ${f}`));
         continue;
       }
 
-      success(`${name} v${pkg.manifest.version} installed (${result.files.length} files)`);
+      success(`${name} v${pkg.manifest.version} installed (${installResult.files.length} files)`);
     } catch (err: any) {
       logError(`${name}: ${err.message}`);
     }
