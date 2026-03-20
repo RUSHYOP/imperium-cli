@@ -60,12 +60,17 @@ export function installPackage(
     };
   }
 
-  // Write all files
+  // Write all files — collect unique dirs first, then write in parallel
+  const dirSet = new Set<string>();
+  for (const file of pkg.files) {
+    dirSet.add(dirname(join(pkgDir, file.path)));
+  }
+  for (const dir of dirSet) {
+    mkdirSync(dir, { recursive: true });
+  }
+
   for (const file of pkg.files) {
     const filePath = join(pkgDir, file.path);
-    const dir = dirname(filePath);
-
-    mkdirSync(dir, { recursive: true });
     writeFileSync(filePath, file.content, 'utf-8');
     filePaths.push(filePath);
     verbose(`Wrote ${filePath}`);

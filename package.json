@@ -21,11 +21,12 @@
   },
   "scripts": {
     "build": "tsup",
+    "build:registry": "npx tsx scripts/build-registry.ts",
     "dev": "tsup --watch",
     "start": "node dist/bin.js",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build:registry && npm run build"
   },
   "keywords": [
     "cli",
@@ -45,7 +46,7 @@
     "dist"
   ],
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "dependencies": {
     "@inquirer/prompts": "8.3.2",
