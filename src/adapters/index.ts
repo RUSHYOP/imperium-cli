@@ -19,9 +19,11 @@ export interface PresetAdapter {
 const claudeAdapter: PresetAdapter = {
   scaffold(rootDir) {
     const dirs = [
-      join(rootDir, 'skills'),
-      join(rootDir, 'agents'),
+      join(rootDir, 'rules'),
       join(rootDir, 'commands'),
+      join(rootDir, 'agents'),
+      join(rootDir, 'skills'),
+      join(rootDir, 'todos'),
     ];
     dirs.forEach((d) => mkdirSync(d, { recursive: true }));
     return dirs;

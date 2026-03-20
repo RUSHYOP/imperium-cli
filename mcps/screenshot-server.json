@@ -1,0 +1,9 @@
+{
+  "name": "screenshot-server",
+  "description": "Take screenshots of screens, windows, and UI elements",
+  "command": "npx",
+  "args": [
+    "-y",
+    "universal-screenshot-mcp"
+  ]
+}

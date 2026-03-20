@@ -1,0 +1,10 @@
+{
+  "name": "react-grab-mcp",
+  "description": "Grab and inspect React component trees from running apps",
+  "command": "npx",
+  "args": [
+    "-y",
+    "@react-grab/mcp",
+    "--stdio"
+  ]
+}

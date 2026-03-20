@@ -1,0 +1,8 @@
+{
+  "name": "pdf-reader",
+  "description": "Read PDF files and extract text, metadata, images, and page info",
+  "command": "npx",
+  "args": [
+    "@sylphx/pdf-reader-mcp"
+  ]
+}

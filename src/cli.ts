@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import type { GlobalOptions, PackageKind, PresetName } from './core/types/index.js';
 import { setLogOptions } from './utils/log.js';
 import { fuzzyCommand } from './utils/fuzzy.js';
-import { warn, error as logError } from './utils/log.js';
+import { warn, error as logError, chalk } from './utils/log.js';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -10,47 +10,90 @@ import { dirname, resolve } from 'node:path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(resolve(__dirname, '..', 'package.json'), 'utf-8'));
 
+// ---------------------------------------------------------------------------
+// Color helpers for help output
+// ---------------------------------------------------------------------------
+
+const c = {
+  h: chalk.bold.cyan,          // headings
+  cmd: chalk.bold.white,       // command names
+  arg: chalk.yellow,           // arguments / placeholders
+  flag: chalk.green,           // flags
+  dim: chalk.dim,              // hints, secondary info
+  ex: chalk.gray,              // example commands
+  brand: chalk.bold.magenta,   // brand / product name
+  type: chalk.blue,            // resource types
+};
+
+/** Format a $ example line with colors. */
+function ex(command: string, description?: string): string {
+  const parts = command.split(/\s+/);
+  const colored = parts.map((p) => {
+    if (p === '$') return c.dim('$');
+    if (p === 'imperium') return c.brand('imperium');
+    if (p.startsWith('-')) return c.flag(p);
+    if (p.startsWith('<') || p.startsWith('[')) return c.arg(p);
+    return p;
+  }).join(' ');
+  if (description) return `  ${colored}  ${c.dim(description)}`;
+  return `  ${colored}`;
+}
+
+// ---------------------------------------------------------------------------
+// Program
+// ---------------------------------------------------------------------------
+
 const program = new Command();
+
+// Override Commander's help formatting for color
+program.configureHelp({
+  subcommandTerm(cmd) {
+    return c.cmd(cmd.name()) + (cmd.usage() ? ' ' + c.dim(cmd.usage()) : '');
+  },
+  optionTerm(opt) {
+    return c.flag(opt.flags);
+  },
+  argumentTerm(arg) {
+    return c.arg(arg.name());
+  },
+});
 
 program
   .name('imperium')
-  .description('A package manager for agent context — skills, reference packs, and presets.')
+  .description('A package manager for agent context — skills, MCPs, and presets.')
   .version(pkg.version)
-  .addHelpText('after', `
-Command Reference:
-  imperium setup <preset> [--with <skills...>] [--dry-run] [-y] [--force] [--verbose]
-    preset: claude | github | windsurf | cursor | custom | <path>
-
-  imperium add <skills...> [--all] [--from-file <path>] [--path <dir>]
-               [--target <preset>] [--root <path>] [--force] [--dry-run]
-               [--merge | --overwrite | --preserve] [-y] [--verbose]
-
-  imperium list [-d [skills...]] [--kind skill|reference|preset] [--format md|yaml|json]
-
-  imperium search <query> [--kind skill|reference|preset] [--format md|yaml|json]
-
-  imperium inspect <skill> [--format md|yaml|json]
-
-  imperium update [skills...] [--target <preset>] [--root <path>] [--dry-run] [-y]
-
-  imperium remove <skills...> [--target <preset>] [--root <path>] [--dry-run] [-y]
-
-  imperium init [--target <preset>] [--root <path>]
-
-  imperium detect
-
-  imperium validate [--target <preset>] [--root <path>]
-
-Common Flags (all commands accept):
-  --target <preset>    claude | github | windsurf | cursor | custom
-  --root <path>        Custom folder root (overrides --target)
-  --dry-run            Preview changes without writing anything
-  -y, --yes            Skip all confirmation prompts
-  --force              Overwrite existing files without asking
-  --verbose            Show file-by-file detail
-  --silent             Suppress all output
-
-Run 'imperium <command> --help' for full options and examples.`);
+  .addHelpText('after', () => [
+    '',
+    c.h('Getting Started'),
+    `  ${c.cmd('imperium setup claude')}                    Scaffold a new Claude project`,
+    `  ${c.cmd('imperium setup claude --preset rxd')}       Scaffold + apply a curated preset`,
+    `  ${c.cmd('imperium list skills')}                     Browse available skills`,
+    `  ${c.cmd('imperium add skills python-patterns')}      Install a skill`,
+    '',
+    c.h('Resource Types'),
+    `  ${c.type('skills')}    Skill packs, reference packs, and presets`,
+    `  ${c.type('mcps')}      MCP server configurations`,
+    `  ${c.type('presets')}    Curated bundles (skills + MCPs + files)`,
+    '',
+    c.h('Explore'),
+    `  ${c.cmd('imperium list')} ${c.type('<type>')}                   List all items of a type`,
+    `  ${c.cmd('imperium search')} ${c.type('<type>')} ${c.arg('<query>')}         Search by keyword`,
+    `  ${c.cmd('imperium inspect')} ${c.type('<type>')} ${c.arg('<name>')}         View full details`,
+    '',
+    c.h('Install & Manage'),
+    `  ${c.cmd('imperium add')} ${c.type('<type>')} ${c.arg('<names...>')}         Add skills or MCPs`,
+    `  ${c.cmd('imperium remove')} ${c.type('<type>')} ${c.arg('<names...>')}      Remove skills or MCPs`,
+    `  ${c.cmd('imperium update')} ${c.arg('[skills...]')}              Update installed skills`,
+    '',
+    c.h('Project'),
+    `  ${c.cmd('imperium setup')} ${c.arg('[adapter]')}                 Scaffold an adapter folder`,
+    `  ${c.cmd('imperium init')}                             Init lockfile`,
+    `  ${c.cmd('imperium detect')}                           Detect agent folders`,
+    `  ${c.cmd('imperium validate')}                         Validate installed skills`,
+    '',
+    c.dim('  Run ') + c.cmd('imperium <command> --help') + c.dim(' for full options and examples.'),
+    '',
+  ].join('\n'));
 
 // ---------------------------------------------------------------------------
 // Flag groups — only attach what's relevant per command
@@ -138,119 +181,201 @@ function extractOpts(cmd: Command): GlobalOptions {
 // Commands
 // ---------------------------------------------------------------------------
 
+type ResourceType = 'skills' | 'mcps' | 'presets';
+
+const RESOURCE_ALIASES: Record<string, ResourceType> = {
+  skills: 'skills',
+  skill: 'skills',
+  mcps: 'mcps',
+  mcp: 'mcps',
+  presets: 'presets',
+  preset: 'presets',
+};
+
+function validateResourceType(type: string): ResourceType {
+  const resolved = RESOURCE_ALIASES[type.toLowerCase()];
+  if (resolved) return resolved;
+  logError(`Unknown resource type '${type}'. Must be: skills (or skill), mcps (or mcp), presets (or preset)`);
+  process.exit(1);
+}
+
 // ---- setup ---------------------------------------------------------------
 {
   const cmd = program
-    .command('setup <preset>')
-    .description('Setup a preset folder (.claude, .github, .windsurf, .cursor, custom)')
+    .command('setup [adapter]')
+    .description('Setup an adapter folder, optionally applying a curated setup preset')
+    .option('--preset <name>', 'Apply a setup preset (curated bundle of skills, MCPs, and files)')
     .option('--with <skills...>', 'Also install these skills after scaffolding')
-    .action(async (preset: string, cmdOpts, cmd: Command) => {
+    .action(async (adapter: string | undefined, cmdOpts, cmd: Command) => {
       const opts = extractOpts(cmd);
       const { setupCommand } = await import('./commands/setup.js');
-      await setupCommand(preset, { ...opts, with: cmdOpts.with });
+      await setupCommand(adapter, { ...opts, with: cmdOpts.with, preset: cmdOpts.preset });
     });
   addTargetFlags(cmd);
   addWriteFlags(cmd);
   addRegistryFlags(cmd);
   addOutputFlags(cmd);
-  cmd.addHelpText('after', `
-Examples:
-  $ imperium setup claude                                   Create .claude/ folder structure
-  $ imperium setup claude --with python-patterns            Setup + install a skill
-  $ imperium setup claude --with python-patterns django-tdd Setup + install multiple skills
-  $ imperium setup github                                   Create .github/copilot/ structure
-  $ imperium setup windsurf                                 Create .windsurf/ structure
-  $ imperium setup ./my-agent                               Create custom folder structure
-  $ imperium setup claude --dry-run                         Preview what would be created`);
+  cmd.addHelpText('after', () => [
+    '',
+    c.h('Examples'),
+    ex('$ imperium setup claude', 'Create .claude/ folder structure'),
+    ex('$ imperium setup claude --preset rxd', 'Setup + apply a curated preset'),
+    ex('$ imperium setup --preset rxd', 'Adapter inferred from preset'),
+    ex('$ imperium setup claude --with python-patterns', 'Setup + install a skill'),
+    ex('$ imperium setup claude --preset rxd --with extra-skill', 'Preset + extra skills'),
+    ex('$ imperium setup github', 'Create .github/copilot/ structure'),
+    ex('$ imperium setup claude --dry-run', 'Preview what would be created'),
+    '',
+  ].join('\n'));
 }
 
 // ---- add -----------------------------------------------------------------
 {
   const cmd = program
-    .command('add <skills...>')
-    .description('Add skills to the project')
-    .option('--from-file <path>', 'Read skill names from a file')
-    .option('--all', 'Add all skills from the registry')
+    .command('add <type> [names...]')
+    .description('Add skills or MCPs to the project')
+    .option('--from-file <path>', 'Read names from a file (skills only)')
+    .option('--all', 'Add all from the registry (skills only)')
     .option('--path <dir>', 'Target directory to install into')
-    .action(async (skills: string[], cmdOpts, cmd: Command) => {
+    .action(async (type: string, names: string[], cmdOpts, cmd: Command) => {
+      const resourceType = validateResourceType(type);
       const opts = extractOpts(cmd);
       if (cmdOpts.path) opts.root = cmdOpts.path;
-      const { addCommand } = await import('./commands/install.js');
-      await addCommand(skills, { ...opts, fromFile: cmdOpts.fromFile, all: cmdOpts.all });
+
+      if (resourceType === 'presets') {
+        logError("Presets can't be added individually. Use 'imperium setup --preset <name>' instead.");
+        process.exitCode = 1;
+        return;
+      }
+
+      if (resourceType === 'skills') {
+        const { addCommand } = await import('./commands/install.js');
+        await addCommand(names, { ...opts, fromFile: cmdOpts.fromFile, all: cmdOpts.all });
+      } else {
+        const { addMcpsCommand } = await import('./commands/mcp.js');
+        await addMcpsCommand(names, opts);
+      }
     });
   addTargetFlags(cmd);
   addWriteFlags(cmd);
   addRegistryFlags(cmd);
   addFilterFlags(cmd);
   addOutputFlags(cmd);
-  cmd.addHelpText('after', `
-Examples:
-  $ imperium add python-patterns                     Add a single skill
-  $ imperium add python-patterns django-tdd           Add multiple skills
-  $ imperium add python-patterns --path .cursor       Add to a specific folder
-  $ imperium add --all                                Add all skills from registry
-  $ imperium add --from-file skills.txt               Add skills listed in a file
-  $ imperium add python-patterns --dry-run --verbose  Preview with details
-  $ imperium add python-patterns --force              Overwrite existing files`);
+  cmd.addHelpText('after', () => [
+    '',
+    c.h('Examples — Skills'),
+    ex('$ imperium add skills python-patterns', 'Add a single skill'),
+    ex('$ imperium add skills python-patterns django-tdd', 'Add multiple'),
+    ex('$ imperium add skills --all', 'Add all from registry'),
+    ex('$ imperium add skills --from-file skills.txt', 'From a file'),
+    ex('$ imperium add skills python-patterns --path .cursor', 'Custom folder'),
+    '',
+    c.h('Examples — MCPs'),
+    ex('$ imperium add mcps obsidian', 'Add an MCP server'),
+    ex('$ imperium add mcps obsidian atlassian miro-mcp', 'Add multiple'),
+    ex('$ imperium add mcps pdf-reader --force', 'Overwrite existing'),
+    '',
+  ].join('\n'));
 }
 
 // ---- list ----------------------------------------------------------------
 {
   const cmd = program
-    .command('list')
-    .description('List available skills from the registry')
-    .option('-d, --description [skills...]', 'Show descriptions (optionally for specific skills only)')
-    .action(async (cmdOpts, cmd: Command) => {
+    .command('list <type>')
+    .description('List available skills, MCPs, or setup presets')
+    .option('-d, --description [items...]', 'Show descriptions (optionally for specific items only)')
+    .action(async (type: string, cmdOpts, cmd: Command) => {
+      const resourceType = validateResourceType(type);
       const opts = extractOpts(cmd);
-      const { listCommand } = await import('./commands/query.js');
-      await listCommand(opts, cmdOpts.description);
+
+      if (resourceType === 'skills') {
+        const { listCommand } = await import('./commands/query.js');
+        await listCommand(opts, cmdOpts.description);
+      } else if (resourceType === 'mcps') {
+        const { listMcpsCommand } = await import('./commands/mcp.js');
+        await listMcpsCommand(opts);
+      } else {
+        const { listPresetsCommand } = await import('./commands/preset.js');
+        await listPresetsCommand(opts);
+      }
     });
   addQueryFlags(cmd);
   addOutputFlags(cmd);
-  cmd.addHelpText('after', `
-Examples:
-  $ imperium list                           List all skill names
-  $ imperium list -d                        List all with descriptions
-  $ imperium list -d python-patterns        Show description for specific skills
-  $ imperium list --kind reference          List only reference packs
-  $ imperium list --format json             Output as JSON`);
+  cmd.addHelpText('after', () => [
+    '',
+    c.h('Examples'),
+    ex('$ imperium list skills', 'List all skills'),
+    ex('$ imperium list skills -d', 'With descriptions'),
+    ex('$ imperium list skills --kind reference', 'Only reference packs'),
+    ex('$ imperium list mcps', 'List MCP servers'),
+    ex('$ imperium list presets', 'List setup presets'),
+    '',
+  ].join('\n'));
 }
 
 // ---- search --------------------------------------------------------------
 {
   const cmd = program
-    .command('search <query>')
-    .description('Search for skills matching a keyword')
-    .action(async (query: string, _cmdOpts, cmd: Command) => {
+    .command('search <type> <query>')
+    .description('Search for skills, MCPs, or presets matching a keyword')
+    .action(async (type: string, query: string, _cmdOpts, cmd: Command) => {
+      const resourceType = validateResourceType(type);
       const opts = extractOpts(cmd);
-      const { searchCommand } = await import('./commands/query.js');
-      await searchCommand(query, opts);
+
+      if (resourceType === 'skills') {
+        const { searchCommand } = await import('./commands/query.js');
+        await searchCommand(query, opts);
+      } else if (resourceType === 'mcps') {
+        const { searchMcpsCommand } = await import('./commands/mcp.js');
+        await searchMcpsCommand(query, opts);
+      } else {
+        const { searchPresetsCommand } = await import('./commands/preset.js');
+        await searchPresetsCommand(query, opts);
+      }
     });
   addQueryFlags(cmd);
   addOutputFlags(cmd);
-  cmd.addHelpText('after', `
-Examples:
-  $ imperium search python           Search by keyword
-  $ imperium search "api design"     Search with a phrase
-  $ imperium search django --kind skill  Filter by kind`);
+  cmd.addHelpText('after', () => [
+    '',
+    c.h('Examples'),
+    ex('$ imperium search skills python', 'Search skills by keyword'),
+    ex('$ imperium search skills "api design"', 'Search with a phrase'),
+    ex('$ imperium search mcps figma', 'Search MCPs by keyword'),
+    ex('$ imperium search presets design', 'Search setup presets'),
+    '',
+  ].join('\n'));
 }
 
 // ---- inspect -------------------------------------------------------------
 {
   const cmd = program
-    .command('inspect <skill>')
-    .description('Show full metadata and content for a skill')
-    .action(async (skill: string, _cmdOpts, cmd: Command) => {
+    .command('inspect <type> <name>')
+    .description('Show full metadata for a skill, MCP, or setup preset')
+    .action(async (type: string, name: string, _cmdOpts, cmd: Command) => {
+      const resourceType = validateResourceType(type);
       const opts = extractOpts(cmd);
-      const { inspectCommand } = await import('./commands/query.js');
-      await inspectCommand(skill, opts);
+
+      if (resourceType === 'skills') {
+        const { inspectCommand } = await import('./commands/query.js');
+        await inspectCommand(name, opts);
+      } else if (resourceType === 'mcps') {
+        const { inspectMcpCommand } = await import('./commands/mcp.js');
+        await inspectMcpCommand(name, opts);
+      } else {
+        const { inspectPresetCommand } = await import('./commands/preset.js');
+        await inspectPresetCommand(name, opts);
+      }
     });
   addQueryFlags(cmd);
   addOutputFlags(cmd);
-  cmd.addHelpText('after', `
-Examples:
-  $ imperium inspect python-patterns          View skill metadata and content
-  $ imperium inspect python-patterns --format yaml  Output as YAML`);
+  cmd.addHelpText('after', () => [
+    '',
+    c.h('Examples'),
+    ex('$ imperium inspect skills python-patterns', 'Skill metadata + content'),
+    ex('$ imperium inspect mcps obsidian', 'MCP server details'),
+    ex('$ imperium inspect presets rxd', 'Preset contents'),
+    '',
+  ].join('\n'));
 }
 
 // ---- update --------------------------------------------------------------
@@ -267,31 +392,51 @@ Examples:
   addWriteFlags(cmd);
   addRegistryFlags(cmd);
   addOutputFlags(cmd);
-  cmd.addHelpText('after', `
-Examples:
-  $ imperium update                          Update all installed skills
-  $ imperium update python-patterns          Update a specific skill
-  $ imperium update --dry-run                Preview what would change`);
+  cmd.addHelpText('after', () => [
+    '',
+    c.h('Examples'),
+    ex('$ imperium update', 'Update all installed skills'),
+    ex('$ imperium update python-patterns', 'Update specific skill'),
+    ex('$ imperium update --dry-run', 'Preview changes'),
+    '',
+  ].join('\n'));
 }
 
 // ---- remove --------------------------------------------------------------
 {
   const cmd = program
-    .command('remove <skills...>')
-    .description('Remove installed skills from the project')
-    .action(async (skills: string[], _cmdOpts, cmd: Command) => {
+    .command('remove <type> <names...>')
+    .description('Remove installed skills or MCPs')
+    .action(async (type: string, names: string[], _cmdOpts, cmd: Command) => {
+      const resourceType = validateResourceType(type);
+
+      if (resourceType === 'presets') {
+        logError("Presets can't be removed. Remove individual skills or MCPs instead.");
+        process.exitCode = 1;
+        return;
+      }
       const opts = extractOpts(cmd);
-      const { removeCommand } = await import('./commands/manage.js');
-      await removeCommand(skills, opts);
+
+      if (resourceType === 'skills') {
+        const { removeCommand } = await import('./commands/manage.js');
+        await removeCommand(names, opts);
+      } else {
+        const { removeMcpsCommand } = await import('./commands/mcp.js');
+        await removeMcpsCommand(names, opts);
+      }
     });
   addTargetFlags(cmd);
   addWriteFlags(cmd);
   addOutputFlags(cmd);
-  cmd.addHelpText('after', `
-Examples:
-  $ imperium remove python-patterns           Remove a skill
-  $ imperium remove python-patterns django-tdd  Remove multiple skills
-  $ imperium remove python-patterns --dry-run   Preview removal`);
+  cmd.addHelpText('after', () => [
+    '',
+    c.h('Examples'),
+    ex('$ imperium remove skills python-patterns', 'Remove a skill'),
+    ex('$ imperium remove skills python-patterns django-tdd', 'Remove multiple'),
+    ex('$ imperium remove mcps obsidian', 'Remove MCP from config'),
+    ex('$ imperium remove mcps obsidian atlassian', 'Remove multiple MCPs'),
+    '',
+  ].join('\n'));
 }
 
 // ---- init ----------------------------------------------------------------
@@ -306,10 +451,13 @@ Examples:
     });
   addTargetFlags(cmd);
   addOutputFlags(cmd);
-  cmd.addHelpText('after', `
-Examples:
-  $ imperium init                    Init lockfile in auto-detected folder
-  $ imperium init --target claude    Init lockfile in .claude/`);
+  cmd.addHelpText('after', () => [
+    '',
+    c.h('Examples'),
+    ex('$ imperium init', 'Init lockfile in auto-detected folder'),
+    ex('$ imperium init --target claude', 'Init lockfile in .claude/'),
+    '',
+  ].join('\n'));
 }
 
 // ---- detect --------------------------------------------------------------
@@ -323,9 +471,12 @@ Examples:
       await detectCommand(opts);
     });
   addOutputFlags(cmd);
-  cmd.addHelpText('after', `
-Examples:
-  $ imperium detect                  Scan for .claude, .github, .cursor, etc.`);
+  cmd.addHelpText('after', () => [
+    '',
+    c.h('Examples'),
+    ex('$ imperium detect', 'Scan for .claude, .github, .cursor, etc.'),
+    '',
+  ].join('\n'));
 }
 
 // ---- validate ------------------------------------------------------------
@@ -340,9 +491,12 @@ Examples:
     });
   addTargetFlags(cmd);
   addOutputFlags(cmd);
-  cmd.addHelpText('after', `
-Examples:
-  $ imperium validate                Check all installed skills match lockfile`);
+  cmd.addHelpText('after', () => [
+    '',
+    c.h('Examples'),
+    ex('$ imperium validate', 'Check installed skills match lockfile'),
+    '',
+  ].join('\n'));
 }
 
 // ---------------------------------------------------------------------------

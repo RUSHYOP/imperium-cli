@@ -1,0 +1,10 @@
+{
+  "name": "miro-mcp",
+  "description": "Interact with Miro boards — create diagrams, tables, docs, and read board content",
+  "command": "npx",
+  "args": [
+    "-y",
+    "mcp-remote@latest",
+    "https://mcp.miro.com/"
+  ]
+}
