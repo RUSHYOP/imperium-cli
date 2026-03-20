@@ -15,34 +15,71 @@ const program = new Command();
 program
   .name('imperium')
   .description('A package manager for agent context — skills, reference packs, and presets.')
-  .version(pkg.version);
+  .version(pkg.version)
+  .addHelpText('after', `
+Global Options (available on all commands):
+  --target <preset>    Target preset: claude, github, windsurf, cursor, custom
+  --root <path>        Custom folder root
+  --verbose            Show file-by-file actions
+  --silent             Minimal output
+  --dry-run            Preview changes only
+  -y, --yes            Skip confirmations
+  --kind <kind>        Filter by kind: skill, reference, preset
+
+Run 'imperium <command> --help' for command-specific options and examples.`);
 
 // ---------------------------------------------------------------------------
-// Global flags
+// Flag groups — only attach what's relevant per command
 // ---------------------------------------------------------------------------
 
-function addGlobalFlags(cmd: Command): Command {
+/** Flags for target resolution (where to install). */
+function addTargetFlags(cmd: Command): Command {
   return cmd
     .option('--root <path>', 'Custom folder root')
-    .option('--target <preset>', 'Target preset: claude, github, windsurf, cursor, custom')
+    .option('--target <preset>', 'Target preset: claude, github, windsurf, cursor, custom');
+}
+
+/** Flags for install/write operations. */
+function addWriteFlags(cmd: Command): Command {
+  return cmd
     .option('--force', 'Overwrite without asking')
     .option('--dry-run', 'Preview changes only')
     .option('-y, --yes', 'Skip confirmations')
     .option('--no-fuzzy', 'Disable typo correction')
-    .option('--verbose', 'Show file-by-file actions')
-    .option('--silent', 'Minimal output')
-    .option('--local <path>', 'Local registry path')
-    .option('--tag <version>', 'Version pin')
-    .option('--channel <channel>', 'Channel: stable, beta, dev')
     .option('--copy', 'Copy files instead of symlink')
     .option('--symlink', 'Symlink where possible')
     .option('--merge', 'Merge with existing files')
     .option('--overwrite', 'Replace existing files')
-    .option('--preserve', 'Preserve user edits')
-    .option('--include <pattern>', 'Include files/folders matching pattern')
-    .option('--exclude <pattern>', 'Exclude files/folders matching pattern')
+    .option('--preserve', 'Preserve user edits');
+}
+
+/** Flags for registry source selection. */
+function addRegistryFlags(cmd: Command): Command {
+  return cmd
+    .option('--local <path>', 'Local registry path')
+    .option('--tag <version>', 'Version pin')
+    .option('--channel <channel>', 'Channel: stable, beta, dev');
+}
+
+/** Flags for querying / filtering. */
+function addQueryFlags(cmd: Command): Command {
+  return cmd
     .option('--kind <kind>', 'Filter by kind: skill, reference, preset')
     .option('--format <fmt>', 'Output format: md, yaml, json');
+}
+
+/** Flags for output verbosity. */
+function addOutputFlags(cmd: Command): Command {
+  return cmd
+    .option('--verbose', 'Show file-by-file actions')
+    .option('--silent', 'Minimal output');
+}
+
+/** File filter flags. */
+function addFilterFlags(cmd: Command): Command {
+  return cmd
+    .option('--include <pattern>', 'Include files/folders matching pattern')
+    .option('--exclude <pattern>', 'Exclude files/folders matching pattern');
 }
 
 function extractOpts(cmd: Command): GlobalOptions {
@@ -77,120 +114,208 @@ function extractOpts(cmd: Command): GlobalOptions {
 // Commands
 // ---------------------------------------------------------------------------
 
-addGlobalFlags(
-  program
+// ---- setup ---------------------------------------------------------------
+{
+  const cmd = program
     .command('setup <preset>')
     .description('Setup a preset folder (.claude, .github, .windsurf, .cursor, custom)')
     .action(async (preset: string, _cmdOpts, cmd: Command) => {
-      const opts = extractOpts(cmd.parent!);
+      const opts = extractOpts(cmd);
       const { setupCommand } = await import('./commands/setup.js');
       await setupCommand(preset, opts);
-    }),
-);
+    });
+  addTargetFlags(cmd);
+  addWriteFlags(cmd);
+  addOutputFlags(cmd);
+  cmd.addHelpText('after', `
+Examples:
+  $ imperium setup claude            Create .claude/ folder structure
+  $ imperium setup github            Create .github/copilot/ structure
+  $ imperium setup windsurf          Create .windsurf/ structure
+  $ imperium setup ./my-agent        Create custom folder structure
+  $ imperium setup claude --dry-run  Preview what would be created`);
+}
 
-addGlobalFlags(
-  program
+// ---- add -----------------------------------------------------------------
+{
+  const cmd = program
     .command('add <skills...>')
-    .description('Add skills to the project  [--all | --from-file <path> | --path <dir>]')
+    .description('Add skills to the project')
     .option('--from-file <path>', 'Read skill names from a file')
     .option('--all', 'Add all skills from the registry')
     .option('--path <dir>', 'Target directory to install into')
     .action(async (skills: string[], cmdOpts, cmd: Command) => {
-      const opts = extractOpts(cmd.parent!);
+      const opts = extractOpts(cmd);
       if (cmdOpts.path) opts.root = cmdOpts.path;
       const { addCommand } = await import('./commands/install.js');
       await addCommand(skills, { ...opts, fromFile: cmdOpts.fromFile, all: cmdOpts.all });
-    }),
-);
+    });
+  addTargetFlags(cmd);
+  addWriteFlags(cmd);
+  addRegistryFlags(cmd);
+  addFilterFlags(cmd);
+  addOutputFlags(cmd);
+  cmd.addHelpText('after', `
+Examples:
+  $ imperium add python-patterns                     Add a single skill
+  $ imperium add python-patterns django-tdd           Add multiple skills
+  $ imperium add python-patterns --path .cursor       Add to a specific folder
+  $ imperium add --all                                Add all skills from registry
+  $ imperium add --from-file skills.txt               Add skills listed in a file
+  $ imperium add python-patterns --dry-run --verbose  Preview with details
+  $ imperium add python-patterns --force              Overwrite existing files`);
+}
 
-addGlobalFlags(
-  program
+// ---- list ----------------------------------------------------------------
+{
+  const cmd = program
     .command('list')
-    .description('List available skills  [-d [skills...]]')
+    .description('List available skills from the registry')
     .option('-d, --description [skills...]', 'Show descriptions (optionally for specific skills only)')
     .action(async (cmdOpts, cmd: Command) => {
-      const opts = extractOpts(cmd.parent!);
+      const opts = extractOpts(cmd);
       const { listCommand } = await import('./commands/query.js');
       await listCommand(opts, cmdOpts.description);
-    }),
-);
+    });
+  addQueryFlags(cmd);
+  addOutputFlags(cmd);
+  cmd.addHelpText('after', `
+Examples:
+  $ imperium list                           List all skill names
+  $ imperium list -d                        List all with descriptions
+  $ imperium list -d python-patterns        Show description for specific skills
+  $ imperium list --kind reference          List only reference packs
+  $ imperium list --format json             Output as JSON`);
+}
 
-addGlobalFlags(
-  program
+// ---- search --------------------------------------------------------------
+{
+  const cmd = program
     .command('search <query>')
     .description('Search for skills matching a keyword')
     .action(async (query: string, _cmdOpts, cmd: Command) => {
-      const opts = extractOpts(cmd.parent!);
+      const opts = extractOpts(cmd);
       const { searchCommand } = await import('./commands/query.js');
       await searchCommand(query, opts);
-    }),
-);
+    });
+  addQueryFlags(cmd);
+  addOutputFlags(cmd);
+  cmd.addHelpText('after', `
+Examples:
+  $ imperium search python           Search by keyword
+  $ imperium search "api design"     Search with a phrase
+  $ imperium search django --kind skill  Filter by kind`);
+}
 
-addGlobalFlags(
-  program
+// ---- inspect -------------------------------------------------------------
+{
+  const cmd = program
     .command('inspect <skill>')
-    .description('Show full metadata for a skill')
+    .description('Show full metadata and content for a skill')
     .action(async (skill: string, _cmdOpts, cmd: Command) => {
-      const opts = extractOpts(cmd.parent!);
+      const opts = extractOpts(cmd);
       const { inspectCommand } = await import('./commands/query.js');
       await inspectCommand(skill, opts);
-    }),
-);
+    });
+  addQueryFlags(cmd);
+  addOutputFlags(cmd);
+  cmd.addHelpText('after', `
+Examples:
+  $ imperium inspect python-patterns          View skill metadata and content
+  $ imperium inspect python-patterns --format yaml  Output as YAML`);
+}
 
-addGlobalFlags(
-  program
+// ---- update --------------------------------------------------------------
+{
+  const cmd = program
     .command('update [skills...]')
-    .description('Update installed skills  (all if none specified)')
+    .description('Update installed skills (all if none specified)')
     .action(async (skills: string[], _cmdOpts, cmd: Command) => {
-      const opts = extractOpts(cmd.parent!);
+      const opts = extractOpts(cmd);
       const { updateCommand } = await import('./commands/manage.js');
       await updateCommand(skills || [], opts);
-    }),
-);
+    });
+  addTargetFlags(cmd);
+  addWriteFlags(cmd);
+  addRegistryFlags(cmd);
+  addOutputFlags(cmd);
+  cmd.addHelpText('after', `
+Examples:
+  $ imperium update                          Update all installed skills
+  $ imperium update python-patterns          Update a specific skill
+  $ imperium update --dry-run                Preview what would change`);
+}
 
-addGlobalFlags(
-  program
+// ---- remove --------------------------------------------------------------
+{
+  const cmd = program
     .command('remove <skills...>')
     .description('Remove installed skills from the project')
     .action(async (skills: string[], _cmdOpts, cmd: Command) => {
-      const opts = extractOpts(cmd.parent!);
+      const opts = extractOpts(cmd);
       const { removeCommand } = await import('./commands/manage.js');
       await removeCommand(skills, opts);
-    }),
-);
+    });
+  addTargetFlags(cmd);
+  addWriteFlags(cmd);
+  addOutputFlags(cmd);
+  cmd.addHelpText('after', `
+Examples:
+  $ imperium remove python-patterns           Remove a skill
+  $ imperium remove python-patterns django-tdd  Remove multiple skills
+  $ imperium remove python-patterns --dry-run   Preview removal`);
+}
 
-addGlobalFlags(
-  program
+// ---- init ----------------------------------------------------------------
+{
+  const cmd = program
     .command('init')
     .description('Initialize an imperium lockfile in the current target')
     .action(async (_cmdOpts, cmd: Command) => {
-      const opts = extractOpts(cmd.parent!);
+      const opts = extractOpts(cmd);
       const { initCommand } = await import('./commands/utility.js');
       await initCommand(opts);
-    }),
-);
+    });
+  addTargetFlags(cmd);
+  addOutputFlags(cmd);
+  cmd.addHelpText('after', `
+Examples:
+  $ imperium init                    Init lockfile in auto-detected folder
+  $ imperium init --target claude    Init lockfile in .claude/`);
+}
 
-addGlobalFlags(
-  program
+// ---- detect --------------------------------------------------------------
+{
+  const cmd = program
     .command('detect')
     .description('Detect agent folders in the current directory')
     .action(async (_cmdOpts, cmd: Command) => {
-      const opts = extractOpts(cmd.parent!);
+      const opts = extractOpts(cmd);
       const { detectCommand } = await import('./commands/query.js');
       await detectCommand(opts);
-    }),
-);
+    });
+  addOutputFlags(cmd);
+  cmd.addHelpText('after', `
+Examples:
+  $ imperium detect                  Scan for .claude, .github, .cursor, etc.`);
+}
 
-addGlobalFlags(
-  program
+// ---- validate ------------------------------------------------------------
+{
+  const cmd = program
     .command('validate')
     .description('Validate installed skills against the lockfile')
     .action(async (_cmdOpts, cmd: Command) => {
-      const opts = extractOpts(cmd.parent!);
+      const opts = extractOpts(cmd);
       const { validateCommand } = await import('./commands/utility.js');
       await validateCommand(opts);
-    }),
-);
+    });
+  addTargetFlags(cmd);
+  addOutputFlags(cmd);
+  cmd.addHelpText('after', `
+Examples:
+  $ imperium validate                Check all installed skills match lockfile`);
+}
 
 // ---------------------------------------------------------------------------
 // Fuzzy command recovery
