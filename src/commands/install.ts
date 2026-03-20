@@ -1,9 +1,9 @@
-import type { GlobalOptions } from '../core/types/index.js';
-import { fetchPackage } from '../core/registry/index.js';
-import { installPackage } from '../core/installer/index.js';
+import type { GlobalOptions } from '../core/types.js';
+import { fetchPackage } from '../core/registry.js';
+import { installPackage } from '../core/installer.js';
 import { resolveTarget } from '../utils/resolve-target.js';
 import { fuzzyMatch } from '../utils/fuzzy.js';
-import { listPackages } from '../core/registry/index.js';
+import { listPackages } from '../core/registry.js';
 import { heading, success, warn, error as logError, info, verbose } from '../utils/log.js';
 import { confirm } from '@inquirer/prompts';
 

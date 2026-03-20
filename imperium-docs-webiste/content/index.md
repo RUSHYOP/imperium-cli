@@ -1,7 +1,7 @@
 ---
 seo:
   title: imperium-cli — The Package Manager for AI Agent Context
-  description: Install, manage, and share skills and curated setup presets across AI agent projects. 121+ skills, instant setup.
+  description: Install, manage, and share skills, instructions, and curated setup presets across AI agent projects. 121+ skills, instant setup.
 ---
 
 ::u-page-hero
@@ -9,7 +9,7 @@ seo:
 The package manager for your [*AI AGENTS*]{.text-primary}
 
 #description
-Install curated knowledge packs, tool connections, and presets into Claude, Copilot, Cursor, or Windsurf. One CLI. Every agent. Instant expertise.
+Install curated knowledge packs, custom instructions, tool connections, and presets into Claude, Copilot, Cursor, or Windsurf. One CLI. Every agent. Instant expertise.
 
 #links
   :::u-button

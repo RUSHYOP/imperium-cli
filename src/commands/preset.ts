@@ -1,13 +1,13 @@
 import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
-import type { GlobalOptions } from '../core/types/index.js';
+import type { GlobalOptions } from '../core/types.js';
 import {
   listSetupPresets,
   searchSetupPresets,
   getSetupPreset,
   fetchPresetFile,
   type SetupPresetEntry,
-} from '../core/registry/index.js';
+} from '../core/registry.js';
 import { heading, success, info, warn, error as logError, verbose } from '../utils/log.js';
 import { addCommand } from './install.js';
 import { addMcpsCommand } from './mcp.js';

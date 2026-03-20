@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import type { GlobalOptions } from '../core/types/index.js';
+import type { GlobalOptions } from '../core/types.js';
 
 let _opts: GlobalOptions = {};
 

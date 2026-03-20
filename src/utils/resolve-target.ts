@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { input, select, confirm } from '@inquirer/prompts';
-import { KNOWN_ROOTS, type PresetName, type ResolvedTarget, type GlobalOptions } from '../core/types/index.js';
+import { KNOWN_ROOTS, type PresetName, type ResolvedTarget, type GlobalOptions } from '../core/types.js';
 import { info, warn } from './log.js';
 import { fuzzyPreset } from './fuzzy.js';
 

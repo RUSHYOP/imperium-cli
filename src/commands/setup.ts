@@ -1,12 +1,13 @@
 import { mkdirSync } from 'node:fs';
-import type { GlobalOptions, PresetName } from '../core/types/index.js';
+import type { GlobalOptions, PresetName } from '../core/types.js';
 import { getAdapter } from '../adapters/index.js';
 import { resolveTarget } from '../utils/resolve-target.js';
-import { writeLockfile, readLockfile } from '../core/lockfile/index.js';
+import { writeLockfile, readLockfile } from '../core/lockfile.js';
 import { heading, success, info, list, verbose, error as logError } from '../utils/log.js';
 import { addCommand } from './install.js';
-import { getSetupPreset, type SetupPresetEntry } from '../core/registry/index.js';
+import { getSetupPreset, type SetupPresetEntry } from '../core/registry.js';
 import { applyPreset } from './preset.js';
+import { addInstructionsCommand } from './instructions.js';
 
 const ADAPTER_NAMES = ['claude', 'github', 'windsurf', 'cursor', 'custom'] as const;
 
@@ -21,7 +22,7 @@ function normalizeAdapter(raw: string): AdapterArg {
 
 export async function setupCommand(
   adapter: string | undefined,
-  opts: GlobalOptions & { with?: string[]; preset?: string },
+  opts: GlobalOptions & { with?: string[]; preset?: string; instructions?: string[] },
 ): Promise<void> {
   let adapterName: AdapterArg;
   let setupPreset: SetupPresetEntry | null = null;
@@ -100,5 +101,10 @@ export async function setupCommand(
   // Install additional --with skills
   if (opts.with && opts.with.length > 0) {
     await addCommand(opts.with, { ...opts, root: target.rootDir });
+  }
+
+  // Install instruction files via --instructions
+  if (opts.instructions && opts.instructions.length > 0) {
+    await addInstructionsCommand(opts.instructions, { ...opts, root: target.rootDir });
   }
 }

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
-import { info, verbose, warn, error as logError } from '../../utils/log.js';
-import type { PackageManifest, PackageKind } from '../types/index.js';
-import { getCached, setCache } from '../cache/index.js';
+import { info, verbose, warn, error as logError } from '../utils/log.js';
+import type { PackageManifest, PackageKind } from './types.js';
+import { getCached, setCache } from './cache.js';
 import matter from 'gray-matter';
 
 /**
@@ -118,10 +118,12 @@ async function fetchRegistryIndex(cfg: RegistryConfig): Promise<RegistryIndex> {
 // Public API
 // ---------------------------------------------------------------------------
 
+const CONTENT_DIRS = ['content/skills', 'content/references', 'content/presets'] as const;
+
 const DIR_TO_KIND: Record<string, PackageKind> = {
-  skills: 'skill',
-  references: 'reference',
-  presets: 'preset',
+  'content/skills': 'skill',
+  'content/references': 'reference',
+  'content/presets': 'preset',
 };
 
 /**
@@ -155,14 +157,13 @@ export async function fetchPackage(
   registryUrl?: string,
 ): Promise<FetchedPackage> {
   const cfg = getConfig();
-  const dirs = ['skills', 'references', 'presets'];
 
   // 1) Use Trees API to find the package directory and all its files
   type TreeEntry = { path: string; type: string };
   type TreeResponse = { tree: TreeEntry[]; truncated: boolean };
   const tree = await fetchJsonCached<TreeResponse>(apiTreeUrl(cfg), 60_000);
 
-  for (const dir of dirs) {
+  for (const dir of CONTENT_DIRS) {
     const prefix = `${dir}/${name}/`;
     const packageFiles = tree.tree.filter(
       (e) => e.type === 'blob' && e.path.startsWith(prefix),
@@ -233,9 +234,8 @@ export async function inspectPackage(
   registryUrl?: string,
 ): Promise<{ manifest: PackageManifest; content: string }> {
   const cfg = getConfig();
-  const dirs = ['skills', 'references', 'presets'];
 
-  for (const dir of dirs) {
+  for (const dir of CONTENT_DIRS) {
     try {
       const skillMd = await fetchTextCached(rawUrl(cfg, `${dir}/${name}/SKILL.md`));
       const { data, content } = matter(skillMd);
@@ -368,6 +368,68 @@ export async function getSetupPreset(name: string): Promise<SetupPresetEntry> {
 /** Fetch a single file from a setup preset directory. */
 export async function fetchPresetFile(presetName: string, filePath: string): Promise<string> {
   const cfg = getConfig();
-  const url = rawUrl(cfg, `setup-presets/${presetName}/${filePath}`);
+  const url = rawUrl(cfg, `content/presets/${presetName}/${filePath}`);
   return fetchText(url);
+}
+
+// ---------------------------------------------------------------------------
+// Instructions Registry
+// ---------------------------------------------------------------------------
+
+export interface InstructionEntry {
+  name: string;
+  description: string;
+}
+
+interface InstructionsRegistryIndex {
+  version: number;
+  updated_at: string;
+  count: number;
+  instructions: InstructionEntry[];
+}
+
+function instructionsRegistryUrl(cfg: RegistryConfig): string {
+  return rawUrl(cfg, 'instructions-registry.json');
+}
+
+async function fetchInstructionsRegistryIndex(cfg: RegistryConfig): Promise<InstructionsRegistryIndex> {
+  return fetchJsonCached<InstructionsRegistryIndex>(instructionsRegistryUrl(cfg));
+}
+
+/** List all available instruction files. */
+export async function listInstructions(): Promise<InstructionEntry[]> {
+  const cfg = getConfig();
+  const index = await fetchInstructionsRegistryIndex(cfg);
+  return index.instructions;
+}
+
+/** Search instruction files by keyword. */
+export async function searchInstructions(query: string): Promise<InstructionEntry[]> {
+  const all = await listInstructions();
+  const q = query.toLowerCase();
+  return all.filter(
+    (i) =>
+      i.name.toLowerCase().includes(q) ||
+      i.description.toLowerCase().includes(q),
+  );
+}
+
+/** Get a single instruction entry by name. */
+export async function getInstruction(name: string): Promise<InstructionEntry> {
+  const all = await listInstructions();
+  const entry = all.find((i) => i.name === name);
+  if (!entry) throw new Error(`Instruction '${name}' not found in registry.`);
+  return entry;
+}
+
+/** Fetch the full content of an instruction file (raw markdown with frontmatter). */
+export async function fetchInstructionContent(name: string): Promise<{ content: string; description: string }> {
+  const cfg = getConfig();
+  const url = rawUrl(cfg, `content/instructions/${name}.md`);
+  const raw = await fetchText(url);
+  const { data, content } = matter(raw);
+  return {
+    content: content.trim(),
+    description: typeof data.description === 'string' ? data.description : '',
+  };
 }
