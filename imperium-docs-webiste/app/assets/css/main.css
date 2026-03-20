@@ -149,7 +149,8 @@ pre {
 }
 :root.dark pre {
   border: 1px solid rgba(167, 139, 250, 0.08) !important;
-  background: rgba(15, 15, 25, 0.7) !important;
+  background: #0d0d17 !important;
+  backdrop-filter: none;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
