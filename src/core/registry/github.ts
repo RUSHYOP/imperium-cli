@@ -62,7 +62,7 @@ async function fetchTextCached(url: string, ttl?: number): Promise<string> {
   }
 
   const res = await fetch(url, {
-    headers: { 'User-Agent': 'imperium-cli' },
+    headers: { 'User-Agent': 'imperium-cli', 'Cache-Control': 'no-cache' },
   });
   if (!res.ok) {
     throw new Error(`HTTP ${res.status}: ${url}`);
@@ -81,7 +81,7 @@ async function fetchJsonCached<T>(url: string, ttl?: number): Promise<T> {
 /** Uncached fetch for text (for individual file downloads). */
 async function fetchText(url: string): Promise<string> {
   const res = await fetch(url, {
-    headers: { 'User-Agent': 'imperium-cli' },
+    headers: { 'User-Agent': 'imperium-cli', 'Cache-Control': 'no-cache' },
   });
   if (!res.ok) {
     throw new Error(`HTTP ${res.status}: ${url}`);
