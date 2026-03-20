@@ -1,4 +1,4 @@
-export default defineNuxtPlugin(() => {
+export default defineNuxtPlugin((nuxtApp) => {
   const style = document.createElement('style')
   style.textContent = `
     #cursor-glow {
@@ -22,13 +22,9 @@ export default defineNuxtPlugin(() => {
       position: relative;
       overflow: hidden;
       border-radius: 16px;
-      background: rgba(255,255,255,0.5);
-      border: 1px solid rgba(228,228,231,0.7);
       transition: border-color 0.3s ease;
     }
     :root.dark .glow-card {
-      background: rgba(255,255,255,0.02);
-      border-color: rgba(63,63,70,0.5);
     }
     .glow-card::before {
       content: '';
@@ -96,7 +92,7 @@ export default defineNuxtPlugin(() => {
 
   // Apply glow-card class to feature cards and card-group cards
   function tagCards() {
-    document.querySelectorAll('[class*="u-page-feature"], [class*="card-group"] [class*="card"]').forEach(card => {
+    document.querySelectorAll('[data-slot="features"] > *, [class*="card-group"] [class*="card"]').forEach(card => {
       if (!card.classList.contains('glow-card')) {
         card.classList.add('glow-card')
       }
@@ -125,8 +121,10 @@ export default defineNuxtPlugin(() => {
     el.style.opacity = '0'
   })
 
-  // Tag cards on load and after navigation
-  tagCards()
-  const observer = new MutationObserver(() => tagCards())
-  observer.observe(document.body, { childList: true, subtree: true })
+  // Tag cards after hydration to avoid class mismatch warnings
+  nuxtApp.hook('app:suspense:resolve', () => {
+    tagCards()
+    const observer = new MutationObserver(() => tagCards())
+    observer.observe(document.body, { childList: true, subtree: true })
+  })
 })

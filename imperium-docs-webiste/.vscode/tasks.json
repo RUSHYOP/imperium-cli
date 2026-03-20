@@ -1,0 +1,17 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "docs-dev",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"nuxt",
+				"dev",
+				"--extends",
+				"docus"
+			],
+			"isBackground": true
+		}
+	]
+}
