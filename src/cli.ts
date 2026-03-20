@@ -119,21 +119,25 @@ function extractOpts(cmd: Command): GlobalOptions {
   const cmd = program
     .command('setup <preset>')
     .description('Setup a preset folder (.claude, .github, .windsurf, .cursor, custom)')
-    .action(async (preset: string, _cmdOpts, cmd: Command) => {
+    .option('--with <skills...>', 'Also install these skills after scaffolding')
+    .action(async (preset: string, cmdOpts, cmd: Command) => {
       const opts = extractOpts(cmd);
       const { setupCommand } = await import('./commands/setup.js');
-      await setupCommand(preset, opts);
+      await setupCommand(preset, { ...opts, with: cmdOpts.with });
     });
   addTargetFlags(cmd);
   addWriteFlags(cmd);
+  addRegistryFlags(cmd);
   addOutputFlags(cmd);
   cmd.addHelpText('after', `
 Examples:
-  $ imperium setup claude            Create .claude/ folder structure
-  $ imperium setup github            Create .github/copilot/ structure
-  $ imperium setup windsurf          Create .windsurf/ structure
-  $ imperium setup ./my-agent        Create custom folder structure
-  $ imperium setup claude --dry-run  Preview what would be created`);
+  $ imperium setup claude                                   Create .claude/ folder structure
+  $ imperium setup claude --with python-patterns            Setup + install a skill
+  $ imperium setup claude --with python-patterns django-tdd Setup + install multiple skills
+  $ imperium setup github                                   Create .github/copilot/ structure
+  $ imperium setup windsurf                                 Create .windsurf/ structure
+  $ imperium setup ./my-agent                               Create custom folder structure
+  $ imperium setup claude --dry-run                         Preview what would be created`);
 }
 
 // ---- add -----------------------------------------------------------------
