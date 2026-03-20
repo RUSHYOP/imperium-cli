@@ -46,12 +46,23 @@ export interface LockEntry {
   lastSync: string;
 }
 
+/** Lockfile entry for an installed instruction file. */
+export interface LockInstructionEntry {
+  name: string;
+  description: string;
+  source: string;
+  checksum: string;
+  installedPath: string;
+  installedAt: string;
+}
+
 /** Full lockfile schema. */
 export interface Lockfile {
   version: 1;
   preset: PresetName | null;
   root: string;
   packages: Record<string, LockEntry>;
+  instructions: Record<string, LockInstructionEntry>;
 }
 
 /** Global CLI options threaded through all commands. */

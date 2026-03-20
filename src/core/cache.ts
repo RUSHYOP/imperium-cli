@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync, readdirSync, rmSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { join } from 'node:path';
 import { homedir } from 'node:os';
+import { createHash } from 'node:crypto';
 
 const CACHE_DIR = join(homedir(), '.imperium', 'cache');
 const DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes
@@ -11,14 +12,9 @@ function ensureCacheDir(): void {
   mkdirSync(CACHE_DIR, { recursive: true });
 }
 
-/** Turn a URL into a safe filename. */
+/** Turn a URL into a safe filename using SHA-256 (no collision risk). */
 function cacheKey(url: string): string {
-  // Use a simple hash-like approach for filenames
-  let hash = 0;
-  for (let i = 0; i < url.length; i++) {
-    hash = ((hash << 5) - hash + url.charCodeAt(i)) | 0;
-  }
-  return `${(hash >>> 0).toString(36)}.cache`;
+  return createHash('sha256').update(url).digest('hex').slice(0, 32) + '.cache';
 }
 
 interface CacheEntry {
@@ -39,7 +35,6 @@ export function getCached(url: string, ttl = DEFAULT_TTL): string | null {
     const entry: CacheEntry = JSON.parse(raw);
 
     if (Date.now() - entry.ts > ttl) return null;
-    if (entry.url !== url) return null; // hash collision
 
     return entry.data;
   } catch {

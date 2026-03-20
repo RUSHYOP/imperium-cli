@@ -43,6 +43,10 @@ function getConfig(): RegistryConfig {
   return { owner: DEFAULT_OWNER, repo: DEFAULT_REPO, branch: DEFAULT_BRANCH };
 }
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
 /** Build the raw GitHub content URL for a file. */
 function rawUrl(cfg: RegistryConfig, path: string): string {
   return `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/${path}`;
@@ -53,6 +57,43 @@ function apiTreeUrl(cfg: RegistryConfig): string {
   return `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/git/trees/${cfg.branch}?recursive=1`;
 }
 
+/** Fetch with exponential backoff — handles 429 rate limits and transient 5xx errors. */
+async function fetchWithRetry(
+  url: string,
+  maxAttempts = 3,
+): Promise<Response> {
+  let lastError: Error | undefined;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'imperium-cli', 'Cache-Control': 'no-cache' },
+    });
+
+    if (res.ok) return res;
+
+    if (res.status === 429 || res.status >= 500) {
+      const retryAfter = res.headers.get('retry-after');
+      const delay = retryAfter
+        ? parseInt(retryAfter, 10) * 1000
+        : Math.min(1000 * 2 ** (attempt - 1), 8000);
+      if (attempt < maxAttempts) {
+        warn(`HTTP ${res.status} from GitHub (attempt ${attempt}/${maxAttempts}). Retrying in ${delay / 1000}s...`);
+        await new Promise((r) => setTimeout(r, delay));
+        continue;
+      }
+    }
+
+    if (res.status === 403) {
+      const msg = res.headers.get('x-ratelimit-remaining') === '0'
+        ? `GitHub API rate limit exceeded. Try again later or set GITHUB_TOKEN.`
+        : `HTTP 403: ${url}`;
+      throw new Error(msg);
+    }
+
+    throw new Error(`HTTP ${res.status}: ${url}`);
+  }
+  throw lastError ?? new Error(`Failed to fetch ${url} after ${maxAttempts} attempts`);
+}
+
 /** Cached fetch for text content. */
 async function fetchTextCached(url: string, ttl?: number): Promise<string> {
   const cached = getCached(url, ttl);
@@ -61,12 +102,7 @@ async function fetchTextCached(url: string, ttl?: number): Promise<string> {
     return cached;
   }
 
-  const res = await fetch(url, {
-    headers: { 'User-Agent': 'imperium-cli', 'Cache-Control': 'no-cache' },
-  });
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status}: ${url}`);
-  }
+  const res = await fetchWithRetry(url);
   const text = await res.text();
   setCache(url, text);
   return text;
@@ -80,12 +116,7 @@ async function fetchJsonCached<T>(url: string, ttl?: number): Promise<T> {
 
 /** Uncached fetch for text (for individual file downloads). */
 async function fetchText(url: string): Promise<string> {
-  const res = await fetch(url, {
-    headers: { 'User-Agent': 'imperium-cli', 'Cache-Control': 'no-cache' },
-  });
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status}: ${url}`);
-  }
+  const res = await fetchWithRetry(url);
   return res.text();
 }
 
@@ -162,6 +193,10 @@ export async function fetchPackage(
   type TreeEntry = { path: string; type: string };
   type TreeResponse = { tree: TreeEntry[]; truncated: boolean };
   const tree = await fetchJsonCached<TreeResponse>(apiTreeUrl(cfg), 60_000);
+
+  if (tree.truncated) {
+    warn('GitHub tree API returned a truncated result — some packages may not be visible. Consider running `npx gitnexus analyze` to refresh the local index.');
+  }
 
   for (const dir of CONTENT_DIRS) {
     const prefix = `${dir}/${name}/`;
