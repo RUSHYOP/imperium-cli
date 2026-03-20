@@ -1,6 +1,6 @@
 {
   "name": "@rushy/imperium-cli",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A package manager for agent context — install skills, reference packs, and presets for any AI agent ecosystem.",
   "type": "module",
   "main": "dist/index.js",
