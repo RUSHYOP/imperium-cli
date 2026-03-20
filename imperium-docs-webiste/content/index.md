@@ -6,7 +6,7 @@ seo:
 
 ::u-page-hero
 #title
-The package manager for your [*AI AGENT*]{.text-primary}
+The package manager for your [*AI AGENTS*]{.text-primary}
 
 #description
 Install curated knowledge packs, tool connections, and presets into Claude, Copilot, Cursor, or Windsurf. One CLI. Every agent. Instant expertise.
