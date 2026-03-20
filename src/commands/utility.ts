@@ -1,9 +1,9 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import matter from 'gray-matter';
-import type { GlobalOptions } from '../core/types/index.js';
+import type { GlobalOptions } from '../core/types.js';
 import { resolveTarget, detectAgentFolders } from '../utils/resolve-target.js';
-import { readLockfile, writeLockfile } from '../core/lockfile/index.js';
+import { readLockfile, writeLockfile } from '../core/lockfile.js';
 import { heading, success, warn, info, error as logError, list as logList } from '../utils/log.js';
 
 // ---------------------------------------------------------------------------

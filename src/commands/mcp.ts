@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import type { GlobalOptions } from '../core/types/index.js';
-import { listMcps, searchMcps, getMcp, type McpEntry } from '../core/registry/index.js';
+import type { GlobalOptions } from '../core/types.js';
+import { listMcps, searchMcps, getMcp, type McpEntry } from '../core/registry.js';
 import { resolveTarget } from '../utils/resolve-target.js';
 import { heading, success, info, warn, error as logError, list } from '../utils/log.js';
 import { input } from '@inquirer/prompts';

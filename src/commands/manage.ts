@@ -1,7 +1,7 @@
-import type { GlobalOptions } from '../core/types/index.js';
-import { fetchPackage } from '../core/registry/index.js';
-import { installPackage, removePackage } from '../core/installer/index.js';
-import { readLockfile, writeLockfile } from '../core/lockfile/index.js';
+import type { GlobalOptions } from '../core/types.js';
+import { fetchPackage } from '../core/registry.js';
+import { installPackage, removePackage } from '../core/installer.js';
+import { readLockfile, writeLockfile } from '../core/lockfile.js';
 import { getAdapter } from '../adapters/index.js';
 import { resolveTarget } from '../utils/resolve-target.js';
 import { heading, success, warn, info, error as logError, verbose } from '../utils/log.js';

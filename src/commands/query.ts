@@ -1,7 +1,7 @@
 import chalk from 'chalk';
-import type { GlobalOptions, PackageKind } from '../core/types/index.js';
-import { listPackages, searchPackages, inspectPackage } from '../core/registry/index.js';
-import { readLockfile } from '../core/lockfile/index.js';
+import type { GlobalOptions, PackageKind } from '../core/types.js';
+import { listPackages, searchPackages, inspectPackage } from '../core/registry.js';
+import { readLockfile } from '../core/lockfile.js';
 import { resolveTarget, detectAgentFolders } from '../utils/resolve-target.js';
 import { heading, info, dim, list as logList, success, error as logError } from '../utils/log.js';
 

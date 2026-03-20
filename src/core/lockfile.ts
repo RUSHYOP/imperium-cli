@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
-import type { Lockfile, LockEntry, PresetName } from '../types/index.js';
-import { verbose } from '../../utils/log.js';
+import type { Lockfile, LockEntry, PresetName } from './types.js';
+import { verbose } from '../utils/log.js';
 
 const LOCKFILE_NAME = 'imperium.lock.json';
 

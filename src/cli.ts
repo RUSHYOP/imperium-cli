@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import type { GlobalOptions, PackageKind, PresetName } from './core/types/index.js';
+import type { GlobalOptions, PackageKind, PresetName } from './core/types.js';
 import { setLogOptions } from './utils/log.js';
 import { fuzzyCommand } from './utils/fuzzy.js';
 import { warn, error as logError, chalk } from './utils/log.js';
@@ -60,7 +60,7 @@ program.configureHelp({
 
 program
   .name('imperium')
-  .description('A package manager for agent context — skills, MCPs, and presets.')
+  .description('A package manager for agent context — skills, MCPs, instructions, and presets.')
   .version(pkg.version)
   .addHelpText('after', () => [
     '',
@@ -71,9 +71,10 @@ program
     `  ${c.cmd('imperium add skills python-patterns')}      Install a skill`,
     '',
     c.h('Resource Types'),
-    `  ${c.type('skills')}    Skill packs, reference packs, and presets`,
-    `  ${c.type('mcps')}      MCP server configurations`,
-    `  ${c.type('presets')}    Curated bundles (skills + MCPs + files)`,
+    `  ${c.type('skills')}           Skill packs, reference packs, and presets`,
+    `  ${c.type('mcps')}             MCP server configurations`,
+    `  ${c.type('instructions')}     Custom instruction files (CLAUDE.md, copilot-instructions.md, rules/)`,
+    `  ${c.type('presets')}           Curated bundles (skills + MCPs + files)`,
     '',
     c.h('Explore'),
     `  ${c.cmd('imperium list')} ${c.type('<type>')}                   List all items of a type`,
@@ -181,7 +182,7 @@ function extractOpts(cmd: Command): GlobalOptions {
 // Commands
 // ---------------------------------------------------------------------------
 
-type ResourceType = 'skills' | 'mcps' | 'presets';
+type ResourceType = 'skills' | 'mcps' | 'presets' | 'instructions';
 
 const RESOURCE_ALIASES: Record<string, ResourceType> = {
   skills: 'skills',
@@ -190,12 +191,14 @@ const RESOURCE_ALIASES: Record<string, ResourceType> = {
   mcp: 'mcps',
   presets: 'presets',
   preset: 'presets',
+  instructions: 'instructions',
+  instruction: 'instructions',
 };
 
 function validateResourceType(type: string): ResourceType {
   const resolved = RESOURCE_ALIASES[type.toLowerCase()];
   if (resolved) return resolved;
-  logError(`Unknown resource type '${type}'. Must be: skills (or skill), mcps (or mcp), presets (or preset)`);
+  logError(`Unknown resource type '${type}'. Must be: skills, mcps, instructions, or presets`);
   process.exit(1);
 }
 
@@ -206,10 +209,11 @@ function validateResourceType(type: string): ResourceType {
     .description('Setup an adapter folder, optionally applying a curated setup preset')
     .option('--preset <name>', 'Apply a setup preset (curated bundle of skills, MCPs, and files)')
     .option('--with <skills...>', 'Also install these skills after scaffolding')
+    .option('--instructions <names...>', 'Also install these instruction files after scaffolding')
     .action(async (adapter: string | undefined, cmdOpts, cmd: Command) => {
       const opts = extractOpts(cmd);
       const { setupCommand } = await import('./commands/setup.js');
-      await setupCommand(adapter, { ...opts, with: cmdOpts.with, preset: cmdOpts.preset });
+      await setupCommand(adapter, { ...opts, with: cmdOpts.with, preset: cmdOpts.preset, instructions: cmdOpts.instructions });
     });
   addTargetFlags(cmd);
   addWriteFlags(cmd);
@@ -222,6 +226,7 @@ function validateResourceType(type: string): ResourceType {
     ex('$ imperium setup claude --preset rxd', 'Setup + apply a curated preset'),
     ex('$ imperium setup --preset rxd', 'Adapter inferred from preset'),
     ex('$ imperium setup claude --with python-patterns', 'Setup + install a skill'),
+    ex('$ imperium setup claude --instructions my-rules', 'Setup + add instruction file'),
     ex('$ imperium setup claude --preset rxd --with extra-skill', 'Preset + extra skills'),
     ex('$ imperium setup github', 'Create .github/copilot/ structure'),
     ex('$ imperium setup claude --dry-run', 'Preview what would be created'),
@@ -251,9 +256,12 @@ function validateResourceType(type: string): ResourceType {
       if (resourceType === 'skills') {
         const { addCommand } = await import('./commands/install.js');
         await addCommand(names, { ...opts, fromFile: cmdOpts.fromFile, all: cmdOpts.all });
-      } else {
+      } else if (resourceType === 'mcps') {
         const { addMcpsCommand } = await import('./commands/mcp.js');
         await addMcpsCommand(names, opts);
+      } else {
+        const { addInstructionsCommand } = await import('./commands/instructions.js');
+        await addInstructionsCommand(names, opts);
       }
     });
   addTargetFlags(cmd);
@@ -275,6 +283,10 @@ function validateResourceType(type: string): ResourceType {
     ex('$ imperium add mcps obsidian atlassian miro-mcp', 'Add multiple'),
     ex('$ imperium add mcps pdf-reader --force', 'Overwrite existing'),
     '',
+    c.h('Examples — Instructions'),
+    ex('$ imperium add instructions my-rules', 'Add an instruction file'),
+    ex('$ imperium add instructions my-rules --force', 'Overwrite existing'),
+    '',
   ].join('\n'));
 }
 
@@ -282,7 +294,7 @@ function validateResourceType(type: string): ResourceType {
 {
   const cmd = program
     .command('list <type>')
-    .description('List available skills, MCPs, or setup presets')
+    .description('List available skills, MCPs, instructions, or setup presets')
     .option('-d, --description [items...]', 'Show descriptions (optionally for specific items only)')
     .action(async (type: string, cmdOpts, cmd: Command) => {
       const resourceType = validateResourceType(type);
@@ -294,6 +306,9 @@ function validateResourceType(type: string): ResourceType {
       } else if (resourceType === 'mcps') {
         const { listMcpsCommand } = await import('./commands/mcp.js');
         await listMcpsCommand(opts);
+      } else if (resourceType === 'instructions') {
+        const { listInstructionsCommand } = await import('./commands/instructions.js');
+        await listInstructionsCommand(opts);
       } else {
         const { listPresetsCommand } = await import('./commands/preset.js');
         await listPresetsCommand(opts);
@@ -308,6 +323,7 @@ function validateResourceType(type: string): ResourceType {
     ex('$ imperium list skills -d', 'With descriptions'),
     ex('$ imperium list skills --kind reference', 'Only reference packs'),
     ex('$ imperium list mcps', 'List MCP servers'),
+    ex('$ imperium list instructions', 'List instruction files'),
     ex('$ imperium list presets', 'List setup presets'),
     '',
   ].join('\n'));
@@ -317,7 +333,7 @@ function validateResourceType(type: string): ResourceType {
 {
   const cmd = program
     .command('search <type> <query>')
-    .description('Search for skills, MCPs, or presets matching a keyword')
+    .description('Search for skills, MCPs, instructions, or presets matching a keyword')
     .action(async (type: string, query: string, _cmdOpts, cmd: Command) => {
       const resourceType = validateResourceType(type);
       const opts = extractOpts(cmd);
@@ -328,6 +344,9 @@ function validateResourceType(type: string): ResourceType {
       } else if (resourceType === 'mcps') {
         const { searchMcpsCommand } = await import('./commands/mcp.js');
         await searchMcpsCommand(query, opts);
+      } else if (resourceType === 'instructions') {
+        const { searchInstructionsCommand } = await import('./commands/instructions.js');
+        await searchInstructionsCommand(query, opts);
       } else {
         const { searchPresetsCommand } = await import('./commands/preset.js');
         await searchPresetsCommand(query, opts);
@@ -341,6 +360,7 @@ function validateResourceType(type: string): ResourceType {
     ex('$ imperium search skills python', 'Search skills by keyword'),
     ex('$ imperium search skills "api design"', 'Search with a phrase'),
     ex('$ imperium search mcps figma', 'Search MCPs by keyword'),
+    ex('$ imperium search instructions rules', 'Search instruction files'),
     ex('$ imperium search presets design', 'Search setup presets'),
     '',
   ].join('\n'));
@@ -350,7 +370,7 @@ function validateResourceType(type: string): ResourceType {
 {
   const cmd = program
     .command('inspect <type> <name>')
-    .description('Show full metadata for a skill, MCP, or setup preset')
+    .description('Show full metadata for a skill, MCP, instruction, or setup preset')
     .action(async (type: string, name: string, _cmdOpts, cmd: Command) => {
       const resourceType = validateResourceType(type);
       const opts = extractOpts(cmd);
@@ -361,6 +381,9 @@ function validateResourceType(type: string): ResourceType {
       } else if (resourceType === 'mcps') {
         const { inspectMcpCommand } = await import('./commands/mcp.js');
         await inspectMcpCommand(name, opts);
+      } else if (resourceType === 'instructions') {
+        const { inspectInstructionCommand } = await import('./commands/instructions.js');
+        await inspectInstructionCommand(name, opts);
       } else {
         const { inspectPresetCommand } = await import('./commands/preset.js');
         await inspectPresetCommand(name, opts);
@@ -373,6 +396,7 @@ function validateResourceType(type: string): ResourceType {
     c.h('Examples'),
     ex('$ imperium inspect skills python-patterns', 'Skill metadata + content'),
     ex('$ imperium inspect mcps obsidian', 'MCP server details'),
+    ex('$ imperium inspect instructions my-rules', 'Instruction file content'),
     ex('$ imperium inspect presets rxd', 'Preset contents'),
     '',
   ].join('\n'));
@@ -406,7 +430,7 @@ function validateResourceType(type: string): ResourceType {
 {
   const cmd = program
     .command('remove <type> <names...>')
-    .description('Remove installed skills or MCPs')
+    .description('Remove installed skills, MCPs, or instructions')
     .action(async (type: string, names: string[], _cmdOpts, cmd: Command) => {
       const resourceType = validateResourceType(type);
 
@@ -420,9 +444,12 @@ function validateResourceType(type: string): ResourceType {
       if (resourceType === 'skills') {
         const { removeCommand } = await import('./commands/manage.js');
         await removeCommand(names, opts);
-      } else {
+      } else if (resourceType === 'mcps') {
         const { removeMcpsCommand } = await import('./commands/mcp.js');
         await removeMcpsCommand(names, opts);
+      } else {
+        const { removeInstructionsCommand } = await import('./commands/instructions.js');
+        await removeInstructionsCommand(names, opts);
       }
     });
   addTargetFlags(cmd);
@@ -435,6 +462,7 @@ function validateResourceType(type: string): ResourceType {
     ex('$ imperium remove skills python-patterns django-tdd', 'Remove multiple'),
     ex('$ imperium remove mcps obsidian', 'Remove MCP from config'),
     ex('$ imperium remove mcps obsidian atlassian', 'Remove multiple MCPs'),
+    ex('$ imperium remove instructions my-rules', 'Remove an instruction file'),
     '',
   ].join('\n'));
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * Build a registry.json index from all SKILL.md files in the skills/ directory.
+ * Build a registry.json index from all SKILL.md files in the content/skills/ directory.
  * Run: npx tsx scripts/build-registry.ts
  */
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
@@ -16,6 +16,7 @@ interface RegistryEntry {
 }
 
 const ROOT = join(import.meta.dirname, '..');
+const CONTENT = join(ROOT, 'content');
 const DIRS = ['skills', 'references', 'presets'] as const;
 const KIND_MAP: Record<string, string> = {
   skills: 'skill',
@@ -26,7 +27,7 @@ const KIND_MAP: Record<string, string> = {
 const entries: RegistryEntry[] = [];
 
 for (const dir of DIRS) {
-  const dirPath = join(ROOT, dir);
+  const dirPath = join(CONTENT, dir);
   let children: string[];
   try {
     children = readdirSync(dirPath);
@@ -50,7 +51,7 @@ for (const dir of DIRS) {
       kind: (data.kind as string) || KIND_MAP[dir] || 'skill',
       version: (data.version as string) || '0.0.0',
       description: typeof data.description === 'string' ? data.description : '',
-      path: `${dir}/${child}`,
+      path: `content/${dir}/${child}`,
     });
   }
 }
@@ -81,7 +82,7 @@ interface McpEntry {
   placeholders?: Record<string, string>;
 }
 
-const mcpDir = join(ROOT, 'mcps');
+const mcpDir = join(CONTENT, 'mcps');
 const mcpEntries: McpEntry[] = [];
 
 try {
@@ -120,7 +121,7 @@ interface SetupPresetEntry {
   files: string[];
 }
 
-const presetDir = join(ROOT, 'setup-presets');
+const presetDir = join(CONTENT, 'presets');
 const presetEntries: SetupPresetEntry[] = [];
 
 try {
@@ -189,3 +190,43 @@ const presetRegistry = {
 const presetOutPath = join(ROOT, 'preset-registry.json');
 writeFileSync(presetOutPath, JSON.stringify(presetRegistry) + '\n', 'utf-8');
 console.log(`preset-registry.json written — ${presetEntries.length} presets`);
+
+// ---------------------------------------------------------------------------
+// Instructions Registry
+// ---------------------------------------------------------------------------
+
+interface InstructionEntry {
+  name: string;
+  description: string;
+}
+
+const instructionsDir = join(CONTENT, 'instructions');
+const instructionEntries: InstructionEntry[] = [];
+
+try {
+  const mdFiles = readdirSync(instructionsDir).filter((f) => f.endsWith('.md'));
+  for (const file of mdFiles) {
+    const raw = readFileSync(join(instructionsDir, file), 'utf-8');
+    const { data } = matter(raw);
+    const name = file.replace(/\.md$/, '');
+    instructionEntries.push({
+      name: (data.name as string) || name,
+      description: typeof data.description === 'string' ? data.description : '',
+    });
+  }
+} catch {
+  // content/instructions/ dir may not exist
+}
+
+instructionEntries.sort((a, b) => a.name.localeCompare(b.name));
+
+const instructionsRegistry = {
+  version: 1,
+  updated_at: new Date().toISOString(),
+  count: instructionEntries.length,
+  instructions: instructionEntries,
+};
+
+const instructionsOutPath = join(ROOT, 'instructions-registry.json');
+writeFileSync(instructionsOutPath, JSON.stringify(instructionsRegistry) + '\n', 'utf-8');
+console.log(`instructions-registry.json written — ${instructionEntries.length} instructions`);

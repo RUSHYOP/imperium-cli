@@ -1,9 +1,9 @@
 import { writeFileSync, mkdirSync, existsSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
-import type { ResolvedTarget, GlobalOptions, LockEntry } from '../types/index.js';
-import type { FetchedPackage } from '../registry/index.js';
-import { readLockfile, writeLockfile, upsertLockEntry, removeLockEntry, isInstalled } from '../lockfile/index.js';
-import { success, warn, verbose, error as logError } from '../../utils/log.js';
+import type { ResolvedTarget, GlobalOptions, LockEntry } from './types.js';
+import type { FetchedPackage } from './registry.js';
+import { readLockfile, writeLockfile, upsertLockEntry, removeLockEntry, isInstalled } from './lockfile.js';
+import { success, warn, verbose, error as logError } from '../utils/log.js';
 
 export interface InstallResult {
   name: string;

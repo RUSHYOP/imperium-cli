@@ -1,7 +1,7 @@
 import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { PresetName, ResolvedTarget } from '../core/types/index.js';
-import type { FetchedPackage } from '../core/registry/index.js';
+import type { PresetName, ResolvedTarget } from '../core/types.js';
+import type { FetchedPackage } from '../core/registry.js';
 import { verbose, warn } from '../utils/log.js';
 
 /** Adapter interface: each preset knows how to scaffold and generate native views. */
@@ -194,4 +194,32 @@ const adapters: Record<PresetName, PresetAdapter> = {
 
 export function getAdapter(preset: PresetName): PresetAdapter {
   return adapters[preset] || customAdapter;
+}
+
+// ---------------------------------------------------------------------------
+// Instruction file placement per adapter
+// ---------------------------------------------------------------------------
+
+/**
+ * Return the destination path for an instruction file based on the adapter.
+ *
+ * - claude  → <rootDir>/CLAUDE.md
+ * - github  → <rootDir>/copilot-instructions.md
+ * - windsurf / cursor / custom → <rootDir>/rules/<name>.md
+ */
+export function getInstructionPath(
+  preset: PresetName,
+  rootDir: string,
+  name: string,
+): string {
+  switch (preset) {
+    case 'claude':
+      return join(rootDir, 'CLAUDE.md');
+    case 'github':
+      return join(rootDir, 'copilot-instructions.md');
+    case 'windsurf':
+    case 'cursor':
+    case 'custom':
+      return join(rootDir, 'rules', `${name}.md`);
+  }
 }
