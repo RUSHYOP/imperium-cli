@@ -17,16 +17,40 @@ program
   .description('A package manager for agent context — skills, reference packs, and presets.')
   .version(pkg.version)
   .addHelpText('after', `
-Global Options (available on all commands):
-  --target <preset>    Target preset: claude, github, windsurf, cursor, custom
-  --root <path>        Custom folder root
-  --verbose            Show file-by-file actions
-  --silent             Minimal output
-  --dry-run            Preview changes only
-  -y, --yes            Skip confirmations
-  --kind <kind>        Filter by kind: skill, reference, preset
+Command Reference:
+  imperium setup <preset> [--with <skills...>] [--dry-run] [-y] [--force] [--verbose]
+    preset: claude | github | windsurf | cursor | custom | <path>
 
-Run 'imperium <command> --help' for command-specific options and examples.`);
+  imperium add <skills...> [--all] [--from-file <path>] [--path <dir>]
+               [--target <preset>] [--root <path>] [--force] [--dry-run]
+               [--merge | --overwrite | --preserve] [-y] [--verbose]
+
+  imperium list [-d [skills...]] [--kind skill|reference|preset] [--format md|yaml|json]
+
+  imperium search <query> [--kind skill|reference|preset] [--format md|yaml|json]
+
+  imperium inspect <skill> [--format md|yaml|json]
+
+  imperium update [skills...] [--target <preset>] [--root <path>] [--dry-run] [-y]
+
+  imperium remove <skills...> [--target <preset>] [--root <path>] [--dry-run] [-y]
+
+  imperium init [--target <preset>] [--root <path>]
+
+  imperium detect
+
+  imperium validate [--target <preset>] [--root <path>]
+
+Common Flags (all commands accept):
+  --target <preset>    claude | github | windsurf | cursor | custom
+  --root <path>        Custom folder root (overrides --target)
+  --dry-run            Preview changes without writing anything
+  -y, --yes            Skip all confirmation prompts
+  --force              Overwrite existing files without asking
+  --verbose            Show file-by-file detail
+  --silent             Suppress all output
+
+Run 'imperium <command> --help' for full options and examples.`);
 
 // ---------------------------------------------------------------------------
 // Flag groups — only attach what's relevant per command
