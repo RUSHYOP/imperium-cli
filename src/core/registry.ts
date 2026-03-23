@@ -1,8 +1,26 @@
 import { createHash } from 'node:crypto';
 import { info, verbose, warn, error as logError } from '../utils/log.js';
-import type { PackageManifest, PackageKind } from './types.js';
+import type { PackageManifest, PackageKind, ContentSource } from './types.js';
 import { getCached, setCache } from './cache.js';
 import matter from 'gray-matter';
+import {
+  listPrivatePackages,
+  fetchPrivatePackage,
+  searchPrivatePackages,
+  inspectPrivatePackage,
+  listPrivateMcps,
+  searchPrivateMcps,
+  getPrivateMcp,
+  listPrivateInstructions,
+  searchPrivateInstructions,
+  getPrivateInstruction,
+  fetchPrivateInstructionContent,
+  listPrivatePresets,
+  searchPrivatePresets,
+  getPrivatePreset,
+  fetchPrivatePresetFile as fetchPrivatePresetFileFromWorker,
+  isPrivatePackage,
+} from './private-registry.js';
 
 /**
  * Default GitHub org/repo used as the skill registry.
@@ -25,6 +43,7 @@ export interface RegistryEntry {
   description: string;
   version: string;
   path: string;
+  source?: ContentSource;
 }
 
 /** A fully-fetched package from the registry. */
@@ -159,7 +178,7 @@ const DIR_TO_KIND: Record<string, PackageKind> = {
 
 /**
  * List all packages in the registry.
- * Uses the pre-built registry.json index — 1 HTTP request (cached).
+ * Merges public (GitHub) + private (R2) registries when logged in.
  */
 export async function listPackages(
   registryUrl?: string,
@@ -168,7 +187,18 @@ export async function listPackages(
   const cfg = getConfig();
 
   const index = await fetchRegistryIndex(cfg);
-  let entries = index.packages;
+  let entries = index.packages.map((e) => ({ ...e, source: 'public' as ContentSource }));
+
+  // Merge private packages if authenticated
+  const privateEntries = await listPrivatePackages(kind);
+  if (privateEntries.length > 0) {
+    const publicNames = new Set(entries.map((e) => e.name));
+    for (const pe of privateEntries) {
+      if (!publicNames.has(pe.name)) {
+        entries.push({ ...pe, source: 'private' });
+      }
+    }
+  }
 
   if (kind) {
     entries = entries.filter((e) => e.kind === kind);
@@ -179,14 +209,17 @@ export async function listPackages(
 
 /**
  * Fetch a single package from the registry by name.
- *
- * Uses the Trees API to discover all files in one call, then fetches
- * all file contents in parallel — much faster than recursive directory walking.
+ * Checks private registry first (if logged in), then public.
  */
 export async function fetchPackage(
   name: string,
   registryUrl?: string,
 ): Promise<FetchedPackage> {
+  // Try private registry first
+  if (await isPrivatePackage(name)) {
+    return fetchPrivatePackage(name);
+  }
+
   const cfg = getConfig();
 
   // 1) Use Trees API to find the package directory and all its files
@@ -256,11 +289,22 @@ export async function searchPackages(
 ): Promise<RegistryEntry[]> {
   const entries = await listPackages(registryUrl);
   const q = query.toLowerCase();
-  return entries.filter(
+  const publicResults = entries.filter(
     (e) =>
       e.name.toLowerCase().includes(q) ||
       e.description.toLowerCase().includes(q),
   );
+
+  // Also search private if logged in
+  const privateResults = await searchPrivatePackages(query);
+  const publicNames = new Set(publicResults.map((e) => e.name));
+  for (const pe of privateResults) {
+    if (!publicNames.has(pe.name)) {
+      publicResults.push({ ...pe, source: 'private' });
+    }
+  }
+
+  return publicResults;
 }
 
 /** Get a single package's metadata without downloading all files. */
@@ -268,6 +312,10 @@ export async function inspectPackage(
   name: string,
   registryUrl?: string,
 ): Promise<{ manifest: PackageManifest; content: string }> {
+  // Check private first
+  const privateResult = await inspectPrivatePackage(name);
+  if (privateResult) return privateResult;
+
   const cfg = getConfig();
 
   for (const dir of CONTENT_DIRS) {
@@ -320,14 +368,25 @@ async function fetchMcpRegistryIndex(cfg: RegistryConfig): Promise<McpRegistryIn
   return fetchJsonCached<McpRegistryIndex>(mcpRegistryUrl(cfg));
 }
 
-/** List all available MCP server templates. */
+/** List all available MCP server templates (public + private). */
 export async function listMcps(): Promise<McpEntry[]> {
   const cfg = getConfig();
   const index = await fetchMcpRegistryIndex(cfg);
-  return index.mcps;
+  const publicMcps = index.mcps;
+
+  // Merge private MCPs
+  const privateMcps = await listPrivateMcps();
+  const publicNames = new Set(publicMcps.map((m) => m.name));
+  for (const pm of privateMcps) {
+    if (!publicNames.has(pm.name)) {
+      publicMcps.push(pm);
+    }
+  }
+
+  return publicMcps;
 }
 
-/** Search MCP templates by keyword. */
+/** Search MCP templates by keyword (public + private). */
 export async function searchMcps(query: string): Promise<McpEntry[]> {
   const all = await listMcps();
   const q = query.toLowerCase();
@@ -338,8 +397,12 @@ export async function searchMcps(query: string): Promise<McpEntry[]> {
   );
 }
 
-/** Get a single MCP template by name. */
+/** Get a single MCP template by name (checks private first). */
 export async function getMcp(name: string): Promise<McpEntry> {
+  // Try private first
+  const privateMcp = await getPrivateMcp(name);
+  if (privateMcp) return privateMcp;
+
   const all = await listMcps();
   const entry = all.find((m) => m.name === name);
   if (!entry) throw new Error(`MCP '${name}' not found in registry.`);
@@ -374,11 +437,22 @@ async function fetchPresetRegistryIndex(cfg: RegistryConfig): Promise<PresetRegi
   return fetchJsonCached<PresetRegistryIndex>(presetRegistryUrl(cfg));
 }
 
-/** List all available setup presets. */
+/** List all available setup presets (public + private). */
 export async function listSetupPresets(): Promise<SetupPresetEntry[]> {
   const cfg = getConfig();
   const index = await fetchPresetRegistryIndex(cfg);
-  return index.presets;
+  const publicPresets = index.presets;
+
+  // Merge private presets
+  const privatePresets = await listPrivatePresets();
+  const publicNames = new Set(publicPresets.map((p) => p.name));
+  for (const pp of privatePresets) {
+    if (!publicNames.has(pp.name)) {
+      publicPresets.push(pp);
+    }
+  }
+
+  return publicPresets;
 }
 
 /** Search setup presets by keyword. */
@@ -392,16 +466,24 @@ export async function searchSetupPresets(query: string): Promise<SetupPresetEntr
   );
 }
 
-/** Get a single setup preset by name. */
+/** Get a single setup preset by name (checks private first). */
 export async function getSetupPreset(name: string): Promise<SetupPresetEntry> {
+  const privatePreset = await getPrivatePreset(name);
+  if (privatePreset) return privatePreset;
+
   const all = await listSetupPresets();
   const entry = all.find((p) => p.name === name);
   if (!entry) throw new Error(`Setup preset '${name}' not found in registry.`);
   return entry;
 }
 
-/** Fetch a single file from a setup preset directory. */
+/** Fetch a single file from a setup preset directory (checks private first). */
 export async function fetchPresetFile(presetName: string, filePath: string): Promise<string> {
+  const privatePreset = await getPrivatePreset(presetName);
+  if (privatePreset) {
+    return fetchPrivatePresetFileFromWorker(presetName, filePath);
+  }
+
   const cfg = getConfig();
   const url = rawUrl(cfg, `content/presets/${presetName}/${filePath}`);
   return fetchText(url);
@@ -431,11 +513,22 @@ async function fetchInstructionsRegistryIndex(cfg: RegistryConfig): Promise<Inst
   return fetchJsonCached<InstructionsRegistryIndex>(instructionsRegistryUrl(cfg));
 }
 
-/** List all available instruction files. */
+/** List all available instruction files (public + private). */
 export async function listInstructions(): Promise<InstructionEntry[]> {
   const cfg = getConfig();
   const index = await fetchInstructionsRegistryIndex(cfg);
-  return index.instructions;
+  const publicInstructions = index.instructions;
+
+  // Merge private instructions
+  const privateInstructions = await listPrivateInstructions();
+  const publicNames = new Set(publicInstructions.map((i) => i.name));
+  for (const pi of privateInstructions) {
+    if (!publicNames.has(pi.name)) {
+      publicInstructions.push(pi);
+    }
+  }
+
+  return publicInstructions;
 }
 
 /** Search instruction files by keyword. */
@@ -449,16 +542,25 @@ export async function searchInstructions(query: string): Promise<InstructionEntr
   );
 }
 
-/** Get a single instruction entry by name. */
+/** Get a single instruction entry by name (checks private first). */
 export async function getInstruction(name: string): Promise<InstructionEntry> {
+  const privateInstr = await getPrivateInstruction(name);
+  if (privateInstr) return privateInstr;
+
   const all = await listInstructions();
   const entry = all.find((i) => i.name === name);
   if (!entry) throw new Error(`Instruction '${name}' not found in registry.`);
   return entry;
 }
 
-/** Fetch the full content of an instruction file (raw markdown with frontmatter). */
+/** Fetch the full content of an instruction file (checks private first). */
 export async function fetchInstructionContent(name: string): Promise<{ content: string; description: string }> {
+  // Try private first
+  const privateInstr = await getPrivateInstruction(name);
+  if (privateInstr) {
+    return fetchPrivateInstructionContent(name);
+  }
+
   const cfg = getConfig();
   const url = rawUrl(cfg, `content/instructions/${name}.md`);
   const raw = await fetchText(url);

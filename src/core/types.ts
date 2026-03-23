@@ -105,3 +105,14 @@ export interface SetupPresetEntry {
   mcps: string[];
   files: string[];
 }
+
+/** Stored authentication state from `imperium login`. */
+export interface AuthState {
+  accessToken: string;
+  refreshToken: string | null;
+  expiresAt: number;
+  email: string | null;
+}
+
+/** Content source — public (GitHub) or private (Cloudflare R2 via Worker). */
+export type ContentSource = 'public' | 'private';
