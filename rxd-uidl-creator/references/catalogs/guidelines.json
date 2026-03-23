@@ -1,0 +1,32 @@
+{
+  "layout": [
+    "Use one flat metadata array per page file stored under projects/.",
+    "Keep Bootstrap container -> row -> column as the only layout system.",
+    "Prefer one row per section and group related leaves inside shared columns."
+  ],
+  "classes": [
+    "Use only verified runtime/component utility classes from the allowlist.",
+    "Strip any legacy c~ prefix before persisting class names.",
+    "Use component props for appearance and wrapper utilities for spacing/layout."
+  ],
+  "children": [
+    "container children must be rows; row children must be columns.",
+    "card uses header/body/footer slot arrays; tab uses keyed child arrays.",
+    "panel, accordion, Div, and form use flat children arrays."
+  ],
+  "patterns": [
+    "Use d-flex only on columns that directly arrange non-row children.",
+    "Do not create repeated Row > Col wrappers for simple heading/paragraph/action stacks.",
+    "Keep designer compatibility fields in generated nodes."
+  ],
+  "reactSubset": [
+    "Round-trip React must stay inside Bootstrap wrappers + current Nb* components + approved utilities.",
+    "No custom CSS modules or custom visual inline styles in React prototypes.",
+    "Prototype the same wrapper tree you intend to save as UIDL."
+  ],
+  "saveImport": [
+    "Local authored files are bare metadata arrays with no pageId.",
+    "Designer import/export uses a wrapped bundle with pageId, metadata, and optional query data.",
+    "API save uses { pageId, metadata: JSON.stringify({ pageInfo, metadata, queryEvents }) }."
+  ]
+}

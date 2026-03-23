@@ -81,118 +81,202 @@ function collectMcpFile(mcpPath: string, mcpName: string): { path: string; conte
   };
 }
 
+function collectPresetFiles(presetDir: string, presetName: string): { path: string; content: string }[] {
+  const files: { path: string; content: string }[] = [];
+  const output = execSync(
+    `find "${presetDir}" -not -path '*/.git/*' -not -path '*/.git' -type f`,
+    { encoding: 'utf-8' },
+  ).trim();
+
+  for (const absPath of output.split('\n').filter(Boolean)) {
+    const relPath = absPath.replace(presetDir + '/', '');
+    const content = readFileSync(absPath, 'utf-8');
+    files.push({
+      path: `content/presets/${presetName}/${relPath}`,
+      content,
+    });
+  }
+
+  return files;
+}
+
+function parseFrontmatter(filePath: string): { name: string; description: string } {
+  const raw = readFileSync(filePath, 'utf-8');
+  const fmMatch = raw.match(/^---\n([\s\S]*?)\n---/);
+  const meta = { name: '', description: '' };
+  if (fmMatch) {
+    const lines = fmMatch[1].split('\n');
+    for (const line of lines) {
+      const [key, ...rest] = line.split(':');
+      const k = key.trim();
+      const v = rest.join(':').trim().replace(/^["']|["']$/g, '');
+      if (k === 'name') meta.name = v;
+      if (k === 'description') meta.description = v;
+    }
+  }
+  return meta;
+}
+
 // ── Main ───────────────────────────────────────────────────────────────
 async function main() {
   const token = getToken();
   const baseDir = join(import.meta.dirname, '..');
 
-  // ── 1. Collect all files to upload ──────────────────────────────────
   const allFiles: { path: string; content: string }[] = [];
+
+  // ── 1. Skills ───────────────────────────────────────────────────────
+
+  // Skill: rxd-design-system (local folder at repo root)
+  const designDir = join(baseDir, 'rxd-design-system');
+  if (existsSync(designDir)) {
+    const files = collectSkillFiles(designDir, 'rxd-design-system');
+    allFiles.push(...files);
+    console.log(`  Skill: rxd-design-system (${files.length} files)`);
+  }
+
+  // Skill: rxd-uidl-creator (local folder at repo root)
+  const uidlDir = join(baseDir, 'rxd-uidl-creator');
+  if (existsSync(uidlDir)) {
+    const files = collectSkillFiles(uidlDir, 'rxd-uidl-creator');
+    allFiles.push(...files);
+    console.log(`  Skill: rxd-uidl-creator (${files.length} files)`);
+  }
 
   // Skill: miro-board-report-pdf (dir: miro-board-to-confluence)
   const miroDir = join(baseDir, 'content/skills/miro-board-to-confluence');
-  const miroFiles = collectSkillFiles(miroDir, 'miro-board-report-pdf');
-  allFiles.push(...miroFiles);
-  console.log(`  Skill: miro-board-report-pdf (${miroFiles.length} files)`);
-
-  // MCP: uidl-mcp (skip if already uploaded / deleted locally)
-  const uidlMcpPath = join(baseDir, 'content/mcps/uidl-mcp.json');
-  if (existsSync(uidlMcpPath)) {
-    allFiles.push(collectMcpFile(uidlMcpPath, 'uidl-mcp'));
-    console.log(`  MCP: uidl-mcp`);
-  } else {
-    console.log(`  MCP: uidl-mcp (already on R2, skipping)`);
+  if (existsSync(miroDir)) {
+    const files = collectSkillFiles(miroDir, 'miro-board-report-pdf');
+    allFiles.push(...files);
+    console.log(`  Skill: miro-board-report-pdf (${files.length} files)`);
   }
 
-  // MCP: rxds-figma-mcp (skip if already uploaded / deleted locally)
-  const figmaMcpPath = join(baseDir, 'content/mcps/rxds-figma-mcp.json');
-  if (existsSync(figmaMcpPath)) {
-    allFiles.push(collectMcpFile(figmaMcpPath, 'rxds-figma-mcp'));
-    console.log(`  MCP: rxds-figma-mcp`);
-  } else {
-    console.log(`  MCP: rxds-figma-mcp (already on R2, skipping)`);
-  }
+  // ── 2. MCPs ─────────────────────────────────────────────────────────
 
-  // ── 2. Upload all content files ─────────────────────────────────────
-  console.log(`\nUploading ${allFiles.length} files to R2...`);
-  const result = await batchUpload(token, allFiles);
-  console.log(`  ✓ Uploaded ${result.uploaded}/${result.total} files`);
-
-  // ── 3. Update registry indexes ──────────────────────────────────────
-  // Fetch existing private registries
-  let skillRegistry = await fetchExistingRegistry(token, 'registry.json');
-  let mcpRegistry = await fetchExistingRegistry(token, 'mcp-registry.json');
-
-  // Initialize if they don't exist
-  if (!skillRegistry) {
-    skillRegistry = { version: 1, updated_at: new Date().toISOString(), count: 0, packages: [] };
-  }
-  if (!mcpRegistry) {
-    mcpRegistry = { version: 1, updated_at: new Date().toISOString(), count: 0, mcps: [] };
-  }
-
-  // Parse SKILL.md frontmatter for the miro skill
-  const skillMd = readFileSync(join(miroDir, 'SKILL.md'), 'utf-8');
-  const fmMatch = skillMd.match(/^---\n([\s\S]*?)\n---/);
-  const skillMeta = { name: 'miro-board-report-pdf', description: '' };
-  if (fmMatch) {
-    const lines = fmMatch[1].split('\n');
-    for (const line of lines) {
-      const [key, ...rest] = line.split(':');
-      if (key.trim() === 'description') skillMeta.description = rest.join(':').trim();
+  for (const mcpName of ['uidl-mcp', 'rxds-figma-mcp']) {
+    const mcpPath = join(baseDir, `content/mcps/${mcpName}.json`);
+    if (existsSync(mcpPath)) {
+      allFiles.push(collectMcpFile(mcpPath, mcpName));
+      console.log(`  MCP: ${mcpName}`);
+    } else {
+      console.log(`  MCP: ${mcpName} (already on R2, skipping)`);
     }
   }
 
-  // Remove stale miro-board-to-confluence entry if present
+  // ── 3. Presets ──────────────────────────────────────────────────────
+
+  const rxdPresetDir = join(baseDir, 'content/presets/rxd');
+  if (existsSync(rxdPresetDir)) {
+    const files = collectPresetFiles(rxdPresetDir, 'rxd');
+    allFiles.push(...files);
+    console.log(`  Preset: rxd (${files.length} files)`);
+  }
+
+  // ── 4. Upload ───────────────────────────────────────────────────────
+
+  if (allFiles.length === 0) {
+    console.log('Nothing to upload.');
+    return;
+  }
+
+  console.log(`\nUploading ${allFiles.length} files to R2...`);
+  // Batch upload in chunks of 100 to avoid payload limits
+  for (let i = 0; i < allFiles.length; i += 100) {
+    const chunk = allFiles.slice(i, i + 100);
+    const result = await batchUpload(token, chunk);
+    console.log(`  ✓ Batch ${Math.floor(i / 100) + 1}: ${result.uploaded}/${result.total} files`);
+  }
+
+  // ── 5. Update registry indexes ──────────────────────────────────────
+
+  console.log('\nUpdating private registry indexes...');
+
+  // Skill registry
+  let skillRegistry = await fetchExistingRegistry(token, 'registry.json') ?? {
+    version: 1, updated_at: '', count: 0, packages: [] as any[],
+  };
+
+  // Remove stale entries
   skillRegistry.packages = skillRegistry.packages.filter(
     (p: any) => p.name !== 'miro-board-to-confluence',
   );
 
-  // Add/update miro-board-report-pdf in skill registry
-  const existingSkillIdx = skillRegistry.packages.findIndex(
-    (p: any) => p.name === 'miro-board-report-pdf',
-  );
-  const skillEntry = {
-    name: 'miro-board-report-pdf',
-    kind: 'skill',
-    description: skillMeta.description,
-    version: '0.0.0',
-  };
-  if (existingSkillIdx >= 0) {
-    skillRegistry.packages[existingSkillIdx] = skillEntry;
-  } else {
-    skillRegistry.packages.push(skillEntry);
+  const skillDefs = [
+    { dir: designDir, registryName: 'rxd-design-system' },
+    { dir: uidlDir, registryName: 'rxd-uidl-creator' },
+    { dir: join(miroDir, ''), registryName: 'miro-board-report-pdf' },
+  ];
+
+  for (const { dir, registryName } of skillDefs) {
+    const skillMdPath = join(dir, 'SKILL.md');
+    if (!existsSync(skillMdPath)) continue;
+    const meta = parseFrontmatter(skillMdPath);
+    const entry = {
+      name: registryName,
+      kind: 'skill',
+      description: meta.description,
+      version: '0.0.0',
+      path: `content/skills/${registryName}`,
+    };
+    const idx = skillRegistry.packages.findIndex((p: any) => p.name === registryName);
+    if (idx >= 0) skillRegistry.packages[idx] = entry;
+    else skillRegistry.packages.push(entry);
   }
   skillRegistry.count = skillRegistry.packages.length;
   skillRegistry.updated_at = new Date().toISOString();
 
-  // Add/update MCPs in MCP registry (only if local files exist)
-  for (const [mcpPath, mcpName] of [
-    [join(baseDir, 'content/mcps/uidl-mcp.json'), 'uidl-mcp'],
-    [join(baseDir, 'content/mcps/rxds-figma-mcp.json'), 'rxds-figma-mcp'],
-  ] as const) {
+  // MCP registry
+  let mcpRegistry = await fetchExistingRegistry(token, 'mcp-registry.json') ?? {
+    version: 1, updated_at: '', count: 0, mcps: [] as any[],
+  };
+
+  for (const mcpName of ['uidl-mcp', 'rxds-figma-mcp']) {
+    const mcpPath = join(baseDir, `content/mcps/${mcpName}.json`);
     if (!existsSync(mcpPath)) continue;
     const mcpData = JSON.parse(readFileSync(mcpPath, 'utf-8'));
-    const existingIdx = mcpRegistry.mcps.findIndex((m: any) => m.name === mcpData.name);
-    if (existingIdx >= 0) {
-      mcpRegistry.mcps[existingIdx] = mcpData;
-    } else {
-      mcpRegistry.mcps.push(mcpData);
-    }
+    const idx = mcpRegistry.mcps.findIndex((m: any) => m.name === mcpData.name);
+    if (idx >= 0) mcpRegistry.mcps[idx] = mcpData;
+    else mcpRegistry.mcps.push(mcpData);
   }
   mcpRegistry.count = mcpRegistry.mcps.length;
   mcpRegistry.updated_at = new Date().toISOString();
 
-  // Upload updated registry indexes
-  console.log('\nUpdating private registry indexes...');
+  // Preset registry
+  let presetRegistry = await fetchExistingRegistry(token, 'preset-registry.json') ?? {
+    version: 1, updated_at: '', count: 0, presets: [] as any[],
+  };
+
+  const presetJsonPath = join(rxdPresetDir, 'preset.json');
+  if (existsSync(presetJsonPath)) {
+    const manifest = JSON.parse(readFileSync(presetJsonPath, 'utf-8'));
+    // Collect file list (everything except preset.json)
+    const presetFiles = collectPresetFiles(rxdPresetDir, 'rxd')
+      .map((f) => f.path.replace('content/presets/rxd/', ''))
+      .filter((f) => f !== 'preset.json');
+
+    const presetEntry = {
+      name: manifest.name,
+      description: manifest.description,
+      adapter: manifest.adapter,
+      skills: manifest.skills || [],
+      mcps: manifest.mcps || [],
+      files: presetFiles,
+    };
+    const idx = presetRegistry.presets.findIndex((p: any) => p.name === manifest.name);
+    if (idx >= 0) presetRegistry.presets[idx] = presetEntry;
+    else presetRegistry.presets.push(presetEntry);
+    presetRegistry.count = presetRegistry.presets.length;
+    presetRegistry.updated_at = new Date().toISOString();
+  }
+
+  // Upload all registry files
   const registryFiles = [
     { path: 'registry.json', content: JSON.stringify(skillRegistry, null, 2) },
     { path: 'mcp-registry.json', content: JSON.stringify(mcpRegistry, null, 2) },
+    { path: 'preset-registry.json', content: JSON.stringify(presetRegistry, null, 2) },
   ];
   const regResult = await batchUpload(token, registryFiles);
   console.log(`  ✓ Updated ${regResult.uploaded} registry files`);
-  console.log(`  Skills: ${skillRegistry.count} packages`);
-  console.log(`  MCPs: ${mcpRegistry.count} MCPs`);
+  console.log(`  Skills: ${skillRegistry.count} | MCPs: ${mcpRegistry.count} | Presets: ${presetRegistry.count}`);
 
   console.log('\nDone! Private content is now available via `imperium login`.');
 }
