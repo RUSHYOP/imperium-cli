@@ -12,9 +12,10 @@ import type { AuthState } from './types.js';
 
 /** Replace with your actual Entra ID app registration values. */
 const CLIENT_ID = process.env.IMPERIUM_CLIENT_ID ?? '952eb2a4-55db-4a95-baae-e744293a6b90';
-const TENANT_ID = process.env.IMPERIUM_TENANT_ID ?? '519958f0-c869-42e3-8409-11cc2ce6f10c';
 
-const AUTHORITY = `https://login.microsoftonline.com/${TENANT_ID}`;
+// Multitenant: use 'organizations' so any org account can sign in.
+// Domain restriction is enforced server-side by the Worker.
+const AUTHORITY = 'https://login.microsoftonline.com/organizations';
 const AUTHORIZE_URL = `${AUTHORITY}/oauth2/v2.0/authorize`;
 const TOKEN_URL = `${AUTHORITY}/oauth2/v2.0/token`;
 const SCOPES = 'openid email profile User.Read';

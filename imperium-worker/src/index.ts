@@ -32,12 +32,13 @@ let jwksCache: JwksResponse | null = null;
 let jwksCacheTime = 0;
 const JWKS_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
-async function getJwks(tenantId: string): Promise<JwksResponse> {
+async function getJwks(): Promise<JwksResponse> {
   if (jwksCache && Date.now() - jwksCacheTime < JWKS_CACHE_TTL) {
     return jwksCache;
   }
 
-  const jwksUrl = `https://login.microsoftonline.com/${tenantId}/discovery/v2.0/keys`;
+  // Use the common JWKS endpoint for multitenant token validation
+  const jwksUrl = 'https://login.microsoftonline.com/common/discovery/v2.0/keys';
   const res = await fetch(jwksUrl);
   if (!res.ok) throw new Error(`Failed to fetch JWKS: HTTP ${res.status}`);
 
@@ -99,9 +100,9 @@ async function verifyJwt(token: string, env: Env): Promise<TokenPayload> {
   const header = decodeJwtHeader(token);
   const payload = decodeJwtPayload(token);
 
-  // Validate issuer
-  const expectedIssuer = `https://login.microsoftonline.com/${env.TENANT_ID}/v2.0`;
-  if (payload.iss !== expectedIssuer) {
+  // Validate issuer — multitenant: accept any Azure AD v2.0 issuer
+  const issuerPattern = /^https:\/\/login\.microsoftonline\.com\/[a-f0-9-]+\/v2\.0$/;
+  if (!issuerPattern.test(payload.iss)) {
     throw new Error(`Invalid issuer: ${payload.iss}`);
   }
 
@@ -116,12 +117,12 @@ async function verifyJwt(token: string, env: Env): Promise<TokenPayload> {
   }
 
   // Validate signature
-  const jwks = await getJwks(env.TENANT_ID);
+  const jwks = await getJwks();
   const signingKey = jwks.keys.find((k) => k.kid === header.kid);
   if (!signingKey) {
     // Refresh JWKS in case keys rotated
     jwksCache = null;
-    const refreshedJwks = await getJwks(env.TENANT_ID);
+    const refreshedJwks = await getJwks();
     const refreshedKey = refreshedJwks.keys.find((k) => k.kid === header.kid);
     if (!refreshedKey) throw new Error('Signing key not found in JWKS');
     return verifySignature(token, refreshedKey, payload);
