@@ -46,30 +46,33 @@ const c = {
   cmd:     chalk.bold.white,
 };
 
+// npm v7+ suppresses stdout from lifecycle scripts. Use stderr instead.
+const log = (msg = '') => process.stderr.write(msg + '\n');
+
 // ---------------------------------------------------------------------------
 // Fresh install banner
 // ---------------------------------------------------------------------------
 
 function printWelcome() {
-  console.log();
-  console.log(c.brand('  ██╗███╗   ███╗██████╗ ███████╗██████╗ ██╗██╗   ██╗███╗   ███╗'));
-  console.log(c.brand('  ██║████╗ ████║██╔══██╗██╔════╝██╔══██╗██║██║   ██║████╗ ████║'));
-  console.log(c.brand('  ██║██╔████╔██║██████╔╝█████╗  ██████╔╝██║██║   ██║██╔████╔██║'));
-  console.log(c.brand('  ██║██║╚██╔╝██║██╔═══╝ ██╔══╝  ██╔══██╗██║██║   ██║██║╚██╔╝██║'));
-  console.log(c.brand('  ██║██║ ╚═╝ ██║██║     ███████╗██║  ██║██║╚██████╔╝██║ ╚═╝ ██║'));
-  console.log(c.brand('  ╚═╝╚═╝     ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝ ╚═════╝ ╚═╝     ╚═╝'));
-  console.log();
-  console.log(`  ${c.heading('Welcome to the Imperium Agentic Ecosystem')}  ${c.dim(`v${VERSION}`)}`);
-  console.log(`  ${c.dim('The package manager for AI agent context — skills, MCPs, and presets.')}`);
-  console.log();
-  console.log(`  ${c.bullet} ${c.dim('Browse skills:')}      ${c.cmd('imperium list skills')}`);
-  console.log(`  ${c.bullet} ${c.dim('Scaffold a project:')} ${c.cmd('imperium setup claude')}`);
-  console.log(`  ${c.bullet} ${c.dim('Apply a preset:')}     ${c.cmd('imperium setup claude --preset fullstack')}`);
-  console.log(`  ${c.bullet} ${c.dim('Install a skill:')}    ${c.cmd('imperium add skills python-patterns')}`);
-  console.log(`  ${c.bullet} ${c.dim('Add an MCP server:')}  ${c.cmd('imperium add mcps obsidian')}`);
-  console.log();
-  console.log(`  ${c.dim('Run')} ${c.cmd('imperium --help')} ${c.dim('to explore all commands.')}`);
-  console.log();
+  log();
+  log(c.brand('  ██╗███╗   ███╗██████╗ ███████╗██████╗ ██╗██╗   ██╗███╗   ███╗'));
+  log(c.brand('  ██║████╗ ████║██╔══██╗██╔════╝██╔══██╗██║██║   ██║████╗ ████║'));
+  log(c.brand('  ██║██╔████╔██║██████╔╝█████╗  ██████╔╝██║██║   ██║██╔████╔██║'));
+  log(c.brand('  ██║██║╚██╔╝██║██╔═══╝ ██╔══╝  ██╔══██╗██║██║   ██║██║╚██╔╝██║'));
+  log(c.brand('  ██║██║ ╚═╝ ██║██║     ███████╗██║  ██║██║╚██████╔╝██║ ╚═╝ ██║'));
+  log(c.brand('  ╚═╝╚═╝     ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝ ╚═════╝ ╚═╝     ╚═╝'));
+  log();
+  log(`  ${c.heading('Welcome to the Imperium Agentic Ecosystem')}  ${c.dim(`v${VERSION}`)}`);
+  log(`  ${c.dim('The package manager for AI agent context — skills, MCPs, and presets.')}`);
+  log();
+  log(`  ${c.bullet} ${c.dim('Browse skills:')}      ${c.cmd('imperium list skills')}`);
+  log(`  ${c.bullet} ${c.dim('Scaffold a project:')} ${c.cmd('imperium setup claude')}`);
+  log(`  ${c.bullet} ${c.dim('Apply a preset:')}     ${c.cmd('imperium setup claude --preset fullstack')}`);
+  log(`  ${c.bullet} ${c.dim('Install a skill:')}    ${c.cmd('imperium add skills python-patterns')}`);
+  log(`  ${c.bullet} ${c.dim('Add an MCP server:')}  ${c.cmd('imperium add mcps obsidian')}`);
+  log();
+  log(`  ${c.dim('Run')} ${c.cmd('imperium --help')} ${c.dim('to explore all commands.')}`);
+  log();
 }
 
 // ---------------------------------------------------------------------------
@@ -77,22 +80,22 @@ function printWelcome() {
 // ---------------------------------------------------------------------------
 
 function printUpdate() {
-  console.log();
-  console.log(`  ${c.heading('Imperium')} ${c.dim('updated')} ${c.dim(`v${OLD_VERSION}`)} ${chalk.dim('→')} ${c.green(`v${VERSION}`)}`);
-  console.log();
+  log();
+  log(`  ${c.heading('Imperium')} ${c.dim('updated')} ${c.dim(`v${OLD_VERSION}`)} ${chalk.dim('→')} ${c.green(`v${VERSION}`)}`);
+  log();
 
   // Show new features for this version
   const features = CHANGELOG[VERSION];
   if (features && features.length > 0) {
-    console.log(`  ${c.heading("What's new in")} ${c.green(`v${VERSION}`)}`);
+    log(`  ${c.heading("What's new in")} ${c.green(`v${VERSION}`)}`);
     for (const f of features) {
-      console.log(`  ${c.green('+')} ${f}`);
+      log(`  ${c.green('+')} ${f}`);
     }
-    console.log();
+    log();
   }
 
-  console.log(`  ${c.dim('Changed something? Run')} ${c.cmd('imperium --help')} ${c.dim('to see all commands.')}`);
-  console.log();
+  log(`  ${c.dim('Changed something? Run')} ${c.cmd('imperium --help')} ${c.dim('to see all commands.')}`);
+  log();
 }
 
 // ---------------------------------------------------------------------------
@@ -123,9 +126,9 @@ function ensurePathSetup() {
         : join(home, '.bash_profile');
     } else if (shell.includes('fish')) {
       // Fish uses a different syntax, just print instructions
-      console.log(`  ${c.yellow('⚠')} Add npm global bin to your fish config:`);
-      console.log(`    ${c.cmd(`set -Ua fish_user_paths ${npmBin}`)}`);
-      console.log();
+      log(`  ${c.yellow('⚠')} Add npm global bin to your fish config:`);
+      log(`    ${c.cmd(`set -Ua fish_user_paths ${npmBin}`)}`);
+      log();
       return;
     } else {
       profilePath = join(home, '.profile');
@@ -138,18 +141,18 @@ function ensurePathSetup() {
       const content = readFileSync(profilePath, 'utf-8');
       if (content.includes(npmBin)) {
         // Already configured but not active in current session
-        console.log(`  ${c.yellow('⚠')} PATH is configured in ${profilePath} but not active.`);
-        console.log(`    ${c.dim('Run:')} ${c.cmd(`source ${profilePath}`)}`);
-        console.log();
+        log(`  ${c.yellow('⚠')} PATH is configured in ${profilePath} but not active.`);
+        log(`    ${c.dim('Run:')} ${c.cmd(`source ${profilePath}`)}`);
+        log();
         return;
       }
     }
 
     // Append the export line
     appendFileSync(profilePath, `\n# Added by imperium-cli — npm global bin\n${exportLine}\n`);
-    console.log(`  ${c.green('✓')} Added npm global bin to ${profilePath}`);
-    console.log(`    ${c.dim('Run')} ${c.cmd(`source ${profilePath}`)} ${c.dim('or open a new terminal.')}`);
-    console.log();
+    log(`  ${c.green('✓')} Added npm global bin to ${profilePath}`);
+    log(`    ${c.dim('Run')} ${c.cmd(`source ${profilePath}`)} ${c.dim('or open a new terminal.')}`);
+    log();
   } catch {
     // Silently skip — non-critical
   }
