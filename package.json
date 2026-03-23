@@ -1,6 +1,6 @@
 {
   "name": "@rushy/imperium-cli",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "A package manager for agent context — install skills, reference packs, and presets for any AI agent ecosystem.",
   "type": "module",
   "main": "dist/index.js",
@@ -26,7 +26,8 @@
     "start": "node dist/bin.js",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run build:registry && npm run build"
+    "prepublishOnly": "npm run build:registry && npm run build",
+    "postinstall": "node dist/postinstall.js"
   },
   "keywords": [
     "cli",
