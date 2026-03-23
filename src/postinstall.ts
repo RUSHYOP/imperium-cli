@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import { execSync } from 'node:child_process';
-import { existsSync, readFileSync, appendFileSync } from 'node:fs';
+import { existsSync, readFileSync, appendFileSync, openSync, writeSync, closeSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 
@@ -46,8 +46,19 @@ const c = {
   cmd:     chalk.bold.white,
 };
 
-// npm v7+ suppresses stdout from lifecycle scripts. Use stderr instead.
-const log = (msg = '') => process.stderr.write(msg + '\n');
+// npm v7+ suppresses stdout AND stderr from lifecycle scripts.
+// Write directly to /dev/tty to bypass npm's output capture.
+let ttyFd: number | null = null;
+try { ttyFd = openSync('/dev/tty', 'w'); } catch { /* CI or no tty */ }
+
+const log = (msg = '') => {
+  const line = msg + '\n';
+  if (ttyFd !== null) {
+    writeSync(ttyFd, line);
+  } else {
+    process.stderr.write(line);
+  }
+};
 
 // ---------------------------------------------------------------------------
 // Fresh install banner
@@ -169,3 +180,8 @@ if (IS_UPDATE) {
 }
 
 ensurePathSetup();
+
+// Clean up tty file descriptor
+if (ttyFd !== null) {
+  try { closeSync(ttyFd); } catch { /* ignore */ }
+}
