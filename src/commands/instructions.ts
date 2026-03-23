@@ -20,6 +20,7 @@ import {
 } from '../core/lockfile.js';
 import { heading, success, info, warn, error as logError, list } from '../utils/log.js';
 import { confirm } from '@inquirer/prompts';
+import chalk from 'chalk';
 
 // ---------------------------------------------------------------------------
 // list
@@ -35,7 +36,8 @@ export async function listInstructionsCommand(opts: GlobalOptions): Promise<void
   }
 
   for (const entry of entries) {
-    info(`  ${entry.name}  ${entry.description ? '— ' + entry.description : ''}`);
+    const privateBadge = entry.source === 'private' ? chalk.magenta(' [private]') : '';
+    info(`  ${entry.name}${privateBadge}  ${entry.description ? '— ' + entry.description : ''}`);
   }
 
   info(`\n  ${entries.length} instruction(s) available.`);
@@ -58,7 +60,8 @@ export async function searchInstructionsCommand(
   }
 
   for (const entry of results) {
-    info(`  ${entry.name}  ${entry.description ? '— ' + entry.description : ''}`);
+    const privateBadge = entry.source === 'private' ? chalk.magenta(' [private]') : '';
+    info(`  ${entry.name}${privateBadge}  ${entry.description ? '— ' + entry.description : ''}`);
   }
 }
 

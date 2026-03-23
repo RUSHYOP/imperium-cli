@@ -5,6 +5,7 @@ import { listMcps, searchMcps, getMcp, type McpEntry } from '../core/registry.js
 import { resolveTarget } from '../utils/resolve-target.js';
 import { heading, success, info, warn, error as logError, list } from '../utils/log.js';
 import { input } from '@inquirer/prompts';
+import chalk from 'chalk';
 
 // ---------------------------------------------------------------------------
 // list mcps
@@ -19,7 +20,8 @@ export async function listMcpsCommand(opts: GlobalOptions): Promise<void> {
     for (const mcp of mcps) {
       const hasPlaceholders = mcp.placeholders && Object.keys(mcp.placeholders).length > 0;
       const badge = hasPlaceholders ? ' [requires config]' : '';
-      info(`  ${mcp.name}${badge}`);
+      const privateBadge = mcp.source === 'private' ? chalk.magenta(' [private]') : '';
+      info(`  ${mcp.name}${badge}${privateBadge}`);
       info(`    ${mcp.description}`);
     }
 
@@ -46,7 +48,8 @@ export async function searchMcpsCommand(query: string, opts: GlobalOptions): Pro
     }
 
     for (const mcp of results) {
-      info(`  ${mcp.name}`);
+      const privateBadge = mcp.source === 'private' ? chalk.magenta(' [private]') : '';
+      info(`  ${mcp.name}${privateBadge}`);
       info(`    ${mcp.description}`);
     }
 

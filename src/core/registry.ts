@@ -351,6 +351,7 @@ export interface McpEntry {
   args: string[];
   env?: Record<string, string>;
   placeholders?: Record<string, string>;
+  source?: ContentSource;
 }
 
 interface McpRegistryIndex {
@@ -372,18 +373,18 @@ async function fetchMcpRegistryIndex(cfg: RegistryConfig): Promise<McpRegistryIn
 export async function listMcps(): Promise<McpEntry[]> {
   const cfg = getConfig();
   const index = await fetchMcpRegistryIndex(cfg);
-  const publicMcps = index.mcps;
+  const entries = index.mcps.map((m) => ({ ...m, source: 'public' as ContentSource }));
 
   // Merge private MCPs
   const privateMcps = await listPrivateMcps();
-  const publicNames = new Set(publicMcps.map((m) => m.name));
+  const publicNames = new Set(entries.map((m) => m.name));
   for (const pm of privateMcps) {
     if (!publicNames.has(pm.name)) {
-      publicMcps.push(pm);
+      entries.push({ ...pm, source: 'private' });
     }
   }
 
-  return publicMcps;
+  return entries;
 }
 
 /** Search MCP templates by keyword (public + private). */
@@ -420,6 +421,7 @@ export interface SetupPresetEntry {
   skills: string[];
   mcps: string[];
   files: string[];
+  source?: ContentSource;
 }
 
 interface PresetRegistryIndex {
@@ -441,18 +443,18 @@ async function fetchPresetRegistryIndex(cfg: RegistryConfig): Promise<PresetRegi
 export async function listSetupPresets(): Promise<SetupPresetEntry[]> {
   const cfg = getConfig();
   const index = await fetchPresetRegistryIndex(cfg);
-  const publicPresets = index.presets;
+  const entries = index.presets.map((p) => ({ ...p, source: 'public' as ContentSource }));
 
   // Merge private presets
   const privatePresets = await listPrivatePresets();
-  const publicNames = new Set(publicPresets.map((p) => p.name));
+  const publicNames = new Set(entries.map((p) => p.name));
   for (const pp of privatePresets) {
     if (!publicNames.has(pp.name)) {
-      publicPresets.push(pp);
+      entries.push({ ...pp, source: 'private' });
     }
   }
 
-  return publicPresets;
+  return entries;
 }
 
 /** Search setup presets by keyword. */
@@ -496,6 +498,7 @@ export async function fetchPresetFile(presetName: string, filePath: string): Pro
 export interface InstructionEntry {
   name: string;
   description: string;
+  source?: ContentSource;
 }
 
 interface InstructionsRegistryIndex {
@@ -517,18 +520,18 @@ async function fetchInstructionsRegistryIndex(cfg: RegistryConfig): Promise<Inst
 export async function listInstructions(): Promise<InstructionEntry[]> {
   const cfg = getConfig();
   const index = await fetchInstructionsRegistryIndex(cfg);
-  const publicInstructions = index.instructions;
+  const entries = index.instructions.map((i) => ({ ...i, source: 'public' as ContentSource }));
 
   // Merge private instructions
   const privateInstructions = await listPrivateInstructions();
-  const publicNames = new Set(publicInstructions.map((i) => i.name));
+  const publicNames = new Set(entries.map((i) => i.name));
   for (const pi of privateInstructions) {
     if (!publicNames.has(pi.name)) {
-      publicInstructions.push(pi);
+      entries.push({ ...pi, source: 'private' });
     }
   }
 
-  return publicInstructions;
+  return entries;
 }
 
 /** Search instruction files by keyword. */
