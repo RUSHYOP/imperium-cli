@@ -1,4 +1,8 @@
 import chalk from 'chalk';
+import { execSync } from 'node:child_process';
+import { existsSync, readFileSync, appendFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { homedir } from 'node:os';
 
 const VERSION = process.env.npm_package_version ?? '?';
 const OLD_VERSION = process.env.npm_old_version;
@@ -60,7 +64,7 @@ function printWelcome() {
   console.log();
   console.log(`  ${c.bullet} ${c.dim('Browse skills:')}      ${c.cmd('imperium list skills')}`);
   console.log(`  ${c.bullet} ${c.dim('Scaffold a project:')} ${c.cmd('imperium setup claude')}`);
-  console.log(`  ${c.bullet} ${c.dim('Apply a preset:')}     ${c.cmd('imperium setup claude --preset rxd')}`);
+  console.log(`  ${c.bullet} ${c.dim('Apply a preset:')}     ${c.cmd('imperium setup claude --preset fullstack')}`);
   console.log(`  ${c.bullet} ${c.dim('Install a skill:')}    ${c.cmd('imperium add skills python-patterns')}`);
   console.log(`  ${c.bullet} ${c.dim('Add an MCP server:')}  ${c.cmd('imperium add mcps obsidian')}`);
   console.log();
@@ -92,6 +96,66 @@ function printUpdate() {
 }
 
 // ---------------------------------------------------------------------------
+// PATH check — ensure global npm bin is in PATH
+// ---------------------------------------------------------------------------
+
+function ensurePathSetup() {
+  try {
+    // Get the global npm bin directory
+    const npmBin = execSync('npm prefix -g', { encoding: 'utf-8' }).trim() + '/bin';
+
+    // Check if it's already in PATH
+    const pathDirs = (process.env.PATH ?? '').split(':');
+    if (pathDirs.some((d) => d === npmBin || d === npmBin + '/')) {
+      return; // Already in PATH, nothing to do
+    }
+
+    // Determine the shell profile file
+    const home = homedir();
+    const shell = process.env.SHELL ?? '';
+    let profilePath: string;
+    if (shell.includes('zsh')) {
+      profilePath = join(home, '.zshrc');
+    } else if (shell.includes('bash')) {
+      // Prefer .bashrc on macOS if it exists, otherwise .bash_profile
+      profilePath = existsSync(join(home, '.bashrc'))
+        ? join(home, '.bashrc')
+        : join(home, '.bash_profile');
+    } else if (shell.includes('fish')) {
+      // Fish uses a different syntax, just print instructions
+      console.log(`  ${c.yellow('⚠')} Add npm global bin to your fish config:`);
+      console.log(`    ${c.cmd(`set -Ua fish_user_paths ${npmBin}`)}`);
+      console.log();
+      return;
+    } else {
+      profilePath = join(home, '.profile');
+    }
+
+    const exportLine = `export PATH="${npmBin}:$PATH"`;
+
+    // Check if it's already in the profile file
+    if (existsSync(profilePath)) {
+      const content = readFileSync(profilePath, 'utf-8');
+      if (content.includes(npmBin)) {
+        // Already configured but not active in current session
+        console.log(`  ${c.yellow('⚠')} PATH is configured in ${profilePath} but not active.`);
+        console.log(`    ${c.dim('Run:')} ${c.cmd(`source ${profilePath}`)}`);
+        console.log();
+        return;
+      }
+    }
+
+    // Append the export line
+    appendFileSync(profilePath, `\n# Added by imperium-cli — npm global bin\n${exportLine}\n`);
+    console.log(`  ${c.green('✓')} Added npm global bin to ${profilePath}`);
+    console.log(`    ${c.dim('Run')} ${c.cmd(`source ${profilePath}`)} ${c.dim('or open a new terminal.')}`);
+    console.log();
+  } catch {
+    // Silently skip — non-critical
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Run
 // ---------------------------------------------------------------------------
 
@@ -100,3 +164,5 @@ if (IS_UPDATE) {
 } else {
   printWelcome();
 }
+
+ensurePathSetup();
