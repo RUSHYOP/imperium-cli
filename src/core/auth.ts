@@ -103,7 +103,7 @@ async function exchangeCodeForTokens(code: string, codeVerifier: string): Promis
   const email = parseEmailFromIdToken(data.id_token);
 
   return {
-    accessToken: data.access_token,
+    accessToken: data.id_token ?? data.access_token,
     refreshToken: data.refresh_token ?? null,
     expiresAt: Date.now() + data.expires_in * 1000,
     email,
@@ -138,7 +138,7 @@ async function refreshAccessToken(refreshToken: string): Promise<AuthState> {
   const email = parseEmailFromIdToken(data.id_token);
 
   return {
-    accessToken: data.access_token,
+    accessToken: data.id_token ?? data.access_token,
     refreshToken: data.refresh_token ?? refreshToken,
     expiresAt: Date.now() + data.expires_in * 1000,
     email,
