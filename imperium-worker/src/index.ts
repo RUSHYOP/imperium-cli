@@ -100,9 +100,10 @@ async function verifyJwt(token: string, env: Env): Promise<TokenPayload> {
   const header = decodeJwtHeader(token);
   const payload = decodeJwtPayload(token);
 
-  // Validate issuer — multitenant: accept any Azure AD v2.0 issuer
-  const issuerPattern = /^https:\/\/login\.microsoftonline\.com\/[a-f0-9-]+\/v2\.0$/;
-  if (!issuerPattern.test(payload.iss)) {
+  // Validate issuer — multitenant: accept any Azure AD v1 or v2 issuer
+  const v2Issuer = /^https:\/\/login\.microsoftonline\.com\/[a-f0-9-]+\/v2\.0$/;
+  const v1Issuer = /^https:\/\/sts\.windows\.net\/[a-f0-9-]+\/$/;
+  if (!v2Issuer.test(payload.iss) && !v1Issuer.test(payload.iss)) {
     throw new Error(`Invalid issuer: ${payload.iss}`);
   }
 
