@@ -22,7 +22,7 @@ function getToken(): string {
     process.exit(1);
   }
   const auth = JSON.parse(readFileSync(authPath, 'utf-8'));
-  return auth.accessToken;
+  return auth.idToken ?? auth.accessToken;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────
@@ -89,27 +89,29 @@ async function main() {
   // ── 1. Collect all files to upload ──────────────────────────────────
   const allFiles: { path: string; content: string }[] = [];
 
-  // Skill: miro-board-to-confluence
+  // Skill: miro-board-report-pdf (dir: miro-board-to-confluence)
   const miroDir = join(baseDir, 'content/skills/miro-board-to-confluence');
-  const miroFiles = collectSkillFiles(miroDir, 'miro-board-to-confluence');
+  const miroFiles = collectSkillFiles(miroDir, 'miro-board-report-pdf');
   allFiles.push(...miroFiles);
-  console.log(`  Skill: miro-board-to-confluence (${miroFiles.length} files)`);
+  console.log(`  Skill: miro-board-report-pdf (${miroFiles.length} files)`);
 
-  // MCP: uidl-mcp
-  const uidlMcp = collectMcpFile(
-    join(baseDir, 'content/mcps/uidl-mcp.json'),
-    'uidl-mcp',
-  );
-  allFiles.push(uidlMcp);
-  console.log(`  MCP: uidl-mcp`);
+  // MCP: uidl-mcp (skip if already uploaded / deleted locally)
+  const uidlMcpPath = join(baseDir, 'content/mcps/uidl-mcp.json');
+  if (existsSync(uidlMcpPath)) {
+    allFiles.push(collectMcpFile(uidlMcpPath, 'uidl-mcp'));
+    console.log(`  MCP: uidl-mcp`);
+  } else {
+    console.log(`  MCP: uidl-mcp (already on R2, skipping)`);
+  }
 
-  // MCP: rxds-figma-mcp
-  const figmaMcp = collectMcpFile(
-    join(baseDir, 'content/mcps/rxds-figma-mcp.json'),
-    'rxds-figma-mcp',
-  );
-  allFiles.push(figmaMcp);
-  console.log(`  MCP: rxds-figma-mcp`);
+  // MCP: rxds-figma-mcp (skip if already uploaded / deleted locally)
+  const figmaMcpPath = join(baseDir, 'content/mcps/rxds-figma-mcp.json');
+  if (existsSync(figmaMcpPath)) {
+    allFiles.push(collectMcpFile(figmaMcpPath, 'rxds-figma-mcp'));
+    console.log(`  MCP: rxds-figma-mcp`);
+  } else {
+    console.log(`  MCP: rxds-figma-mcp (already on R2, skipping)`);
+  }
 
   // ── 2. Upload all content files ─────────────────────────────────────
   console.log(`\nUploading ${allFiles.length} files to R2...`);
@@ -132,7 +134,7 @@ async function main() {
   // Parse SKILL.md frontmatter for the miro skill
   const skillMd = readFileSync(join(miroDir, 'SKILL.md'), 'utf-8');
   const fmMatch = skillMd.match(/^---\n([\s\S]*?)\n---/);
-  const skillMeta = { name: 'miro-board-to-confluence', description: '' };
+  const skillMeta = { name: 'miro-board-report-pdf', description: '' };
   if (fmMatch) {
     const lines = fmMatch[1].split('\n');
     for (const line of lines) {
@@ -141,12 +143,17 @@ async function main() {
     }
   }
 
-  // Add/update miro-board-to-confluence in skill registry
+  // Remove stale miro-board-to-confluence entry if present
+  skillRegistry.packages = skillRegistry.packages.filter(
+    (p: any) => p.name !== 'miro-board-to-confluence',
+  );
+
+  // Add/update miro-board-report-pdf in skill registry
   const existingSkillIdx = skillRegistry.packages.findIndex(
-    (p: any) => p.name === 'miro-board-to-confluence',
+    (p: any) => p.name === 'miro-board-report-pdf',
   );
   const skillEntry = {
-    name: 'miro-board-to-confluence',
+    name: 'miro-board-report-pdf',
     kind: 'skill',
     description: skillMeta.description,
     version: '0.0.0',
@@ -159,11 +166,13 @@ async function main() {
   skillRegistry.count = skillRegistry.packages.length;
   skillRegistry.updated_at = new Date().toISOString();
 
-  // Add/update MCPs in MCP registry
-  const uidlMcpData = JSON.parse(readFileSync(join(baseDir, 'content/mcps/uidl-mcp.json'), 'utf-8'));
-  const figmaMcpData = JSON.parse(readFileSync(join(baseDir, 'content/mcps/rxds-figma-mcp.json'), 'utf-8'));
-
-  for (const mcpData of [uidlMcpData, figmaMcpData]) {
+  // Add/update MCPs in MCP registry (only if local files exist)
+  for (const [mcpPath, mcpName] of [
+    [join(baseDir, 'content/mcps/uidl-mcp.json'), 'uidl-mcp'],
+    [join(baseDir, 'content/mcps/rxds-figma-mcp.json'), 'rxds-figma-mcp'],
+  ] as const) {
+    if (!existsSync(mcpPath)) continue;
+    const mcpData = JSON.parse(readFileSync(mcpPath, 'utf-8'));
     const existingIdx = mcpRegistry.mcps.findIndex((m: any) => m.name === mcpData.name);
     if (existingIdx >= 0) {
       mcpRegistry.mcps[existingIdx] = mcpData;

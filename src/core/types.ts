@@ -109,6 +109,7 @@ export interface SetupPresetEntry {
 /** Stored authentication state from `imperium login`. */
 export interface AuthState {
   accessToken: string;
+  idToken: string | null;
   refreshToken: string | null;
   expiresAt: number;
   email: string | null;
