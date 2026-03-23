@@ -92,6 +92,11 @@ program
     `  ${c.cmd('imperium detect')}                           Detect agent folders`,
     `  ${c.cmd('imperium validate')}                         Validate installed skills`,
     '',
+    c.h('Authentication'),
+    `  ${c.cmd('imperium login')}                            Sign in for private content`,
+    `  ${c.cmd('imperium logout')}                           Sign out`,
+    `  ${c.cmd('imperium whoami')}                           Show auth status`,
+    '',
     c.dim('  Run ') + c.cmd('imperium <command> --help') + c.dim(' for full options and examples.'),
     '',
   ].join('\n'));
@@ -525,6 +530,57 @@ function validateResourceType(type: string): ResourceType {
     ex('$ imperium validate', 'Check installed skills match lockfile'),
     '',
   ].join('\n'));
+}
+
+// ---- login ---------------------------------------------------------------
+{
+  program
+    .command('login')
+    .description('Sign in with Microsoft to access private skills and content')
+    .action(async () => {
+      const { loginCommand } = await import('./commands/auth.js');
+      await loginCommand();
+    })
+    .addHelpText('after', () => [
+      '',
+      c.h('Examples'),
+      ex('$ imperium login', 'Open browser for Microsoft sign-in'),
+      '',
+    ].join('\n'));
+}
+
+// ---- logout --------------------------------------------------------------
+{
+  program
+    .command('logout')
+    .description('Clear stored authentication credentials')
+    .action(async () => {
+      const { logoutCommand } = await import('./commands/auth.js');
+      logoutCommand();
+    })
+    .addHelpText('after', () => [
+      '',
+      c.h('Examples'),
+      ex('$ imperium logout', 'Sign out and clear tokens'),
+      '',
+    ].join('\n'));
+}
+
+// ---- whoami --------------------------------------------------------------
+{
+  program
+    .command('whoami')
+    .description('Show current authentication status')
+    .action(async () => {
+      const { whoamiCommand } = await import('./commands/auth.js');
+      whoamiCommand();
+    })
+    .addHelpText('after', () => [
+      '',
+      c.h('Examples'),
+      ex('$ imperium whoami', 'Show logged-in email and domain'),
+      '',
+    ].join('\n'));
 }
 
 // ---------------------------------------------------------------------------

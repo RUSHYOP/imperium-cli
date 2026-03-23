@@ -38,8 +38,9 @@ export async function listCommand(opts: GlobalOptions, description?: true | stri
 
     for (const entry of entries) {
       const tag = installed.has(entry.name) ? chalk.green(' [installed]') : '';
+      const privateBadge = entry.source === 'private' ? chalk.magenta(' [private]') : '';
       const kindBadge = chalk.dim(`[${entry.kind}]`);
-      info(`  ${chalk.bold(entry.name)} ${kindBadge} v${entry.version}${tag}`);
+      info(`  ${chalk.bold(entry.name)} ${kindBadge} v${entry.version}${tag}${privateBadge}`);
 
       if (showDescAll || descFilter?.has(entry.name.toLowerCase())) {
         dim(`    ${entry.description}`);
@@ -70,7 +71,8 @@ export async function searchCommand(query: string, opts: GlobalOptions): Promise
 
     for (const entry of results) {
       const kindBadge = chalk.dim(`[${entry.kind}]`);
-      info(`  ${chalk.bold(entry.name)} ${kindBadge} v${entry.version}`);
+      const privateBadge = entry.source === 'private' ? chalk.magenta(' [private]') : '';
+      info(`  ${chalk.bold(entry.name)} ${kindBadge} v${entry.version}${privateBadge}`);
       dim(`    ${entry.description}`);
     }
 
