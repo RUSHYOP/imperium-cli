@@ -1,9 +1,10 @@
 import chalk from 'chalk';
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, appendFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
+import { execSync } from 'node:child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CURRENT_VERSION: string = JSON.parse(
@@ -92,12 +93,64 @@ function printUpdate(oldVersion: string) {
 }
 
 /**
+ * On first run, ensure the npm global bin directory is in the user's PATH.
+ */
+function ensurePathSetup(): void {
+  try {
+    const npmBin = execSync('npm prefix -g', { encoding: 'utf-8' }).trim() + '/bin';
+    const pathDirs = (process.env.PATH ?? '').split(':');
+    if (pathDirs.some((d) => d === npmBin || d === npmBin + '/')) return;
+
+    const home = homedir();
+    const shell = process.env.SHELL ?? '';
+    let profilePath: string;
+    if (shell.includes('zsh')) {
+      profilePath = join(home, '.zshrc');
+    } else if (shell.includes('bash')) {
+      profilePath = existsSync(join(home, '.bashrc'))
+        ? join(home, '.bashrc')
+        : join(home, '.bash_profile');
+    } else if (shell.includes('fish')) {
+      console.log(`  ${c.dim('Add npm global bin to your fish config:')}`);
+      console.log(`  ${c.cmd(`set -Ua fish_user_paths ${npmBin}`)}`);
+      console.log();
+      return;
+    } else {
+      profilePath = join(home, '.profile');
+    }
+
+    const exportLine = `export PATH="${npmBin}:$PATH"`;
+    if (existsSync(profilePath)) {
+      const content = readFileSync(profilePath, 'utf-8');
+      if (content.includes(npmBin)) return;
+    }
+
+    appendFileSync(profilePath, `\n# Added by imperium-cli — npm global bin\n${exportLine}\n`);
+    console.log(`  ${c.green('✓')} Added npm global bin to PATH in ${profilePath}`);
+    console.log(`    ${c.dim('Restart your terminal or run')} ${c.cmd(`source ${profilePath}`)}`);
+    console.log();
+  } catch {
+    // Non-critical — skip silently
+  }
+}
+
+/**
  * Show a welcome or update message once after install/upgrade.
- * Skips when stdout is not a TTY (piped output).
+ * Only shows on "info" invocations: `imperium`, `imperium --help`, `imperium -V`.
+ * Skips for action commands (list, add, search, setup, etc.) so the user
+ * isn't interrupted when running a real command right after install.
  */
 export function greetIfNeeded(): void {
   // Don't pollute piped/scripted output
   if (!process.stdout.isTTY) return;
+
+  // Only show greeting on bare/help/version invocations
+  const args = process.argv.slice(2);
+  const firstArg = args[0] ?? '';
+  const isInfoCommand = args.length === 0
+    || firstArg === '--help' || firstArg === '-h'
+    || firstArg === '--version' || firstArg === '-V';
+  if (!isInfoCommand) return;
 
   try {
     mkdirSync(STATE_DIR, { recursive: true });
@@ -111,6 +164,7 @@ export function greetIfNeeded(): void {
 
     if (stored === null) {
       printWelcome();
+      ensurePathSetup();
     } else {
       printUpdate(stored);
     }
