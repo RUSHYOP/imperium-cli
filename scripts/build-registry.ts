@@ -150,6 +150,9 @@ try {
   });
 
   for (const folder of presetFolders) {
+    // Skip gitignored directories (private presets on R2)
+    if (isGitIgnored(`content/presets/${folder}`)) continue;
+
     const manifestPath = join(presetDir, folder, 'preset.json');
     try {
       if (!statSync(manifestPath).isFile()) continue;
