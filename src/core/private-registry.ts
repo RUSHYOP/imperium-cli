@@ -76,6 +76,73 @@ async function fetchPrivateText(path: string): Promise<string> {
 }
 
 // ---------------------------------------------------------------------------
+// Batch download — fetch multiple files in one request
+// ---------------------------------------------------------------------------
+
+interface BatchResponseItem {
+  path: string;
+  content: string | null;
+  error?: string;
+}
+
+interface BatchResponse {
+  files: BatchResponseItem[];
+}
+
+/**
+ * Fetch multiple files in a single HTTP request via the batch endpoint.
+ * Falls back to individual parallel fetches if the batch endpoint fails.
+ */
+async function fetchPrivateBatch(paths: string[]): Promise<Map<string, string>> {
+  const results = new Map<string, string>();
+
+  try {
+    const token = await getAccessToken();
+    const res = await fetch(`${WORKER_BASE_URL}/batch/download`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'User-Agent': 'imperium-cli',
+      },
+      body: JSON.stringify({ paths }),
+    });
+
+    if (res.ok) {
+      const data = await res.json() as BatchResponse;
+      for (const item of data.files) {
+        if (item.content !== null) {
+          results.set(item.path, item.content);
+        }
+      }
+      return results;
+    }
+
+    verbose(`Batch download returned HTTP ${res.status}, falling back to parallel fetches`);
+  } catch (err: any) {
+    verbose(`Batch download failed: ${err.message}, falling back to parallel fetches`);
+  }
+
+  // Fallback: individual parallel fetches
+  const settled = await Promise.all(
+    paths.map(async (p) => {
+      try {
+        const content = await fetchPrivateText(p);
+        return { path: p, content };
+      } catch {
+        return { path: p, content: null };
+      }
+    }),
+  );
+  for (const item of settled) {
+    if (item.content !== null) {
+      results.set(item.path, item.content);
+    }
+  }
+  return results;
+}
+
+// ---------------------------------------------------------------------------
 // Private Registry Index
 // ---------------------------------------------------------------------------
 
@@ -142,25 +209,31 @@ export async function fetchPrivatePackage(name: string): Promise<FetchedPackage>
     throw new Error(`Private package '${name}' has no files.`);
   }
 
-  // Fetch SKILL.md first
   const skillMdPath = filePaths.find((f) => f.endsWith('SKILL.md'));
   if (!skillMdPath) {
     throw new Error(`Private package '${name}' is missing SKILL.md.`);
   }
 
-  const skillMd = await fetchPrivateText(`/content/skills/${name}/${skillMdPath}`);
+  // Batch-fetch all files in a single request
+  const fullPaths = filePaths.map((f) => `/content/skills/${name}/${f}`);
+  const batchResults = await fetchPrivateBatch(fullPaths);
+
+  const skillMdFullPath = `/content/skills/${name}/${skillMdPath}`;
+  const skillMd = batchResults.get(skillMdFullPath);
+  if (!skillMd) {
+    throw new Error(`Failed to fetch SKILL.md for private package '${name}'.`);
+  }
+
   const { data, content } = matter(skillMd);
   const manifest = data as PackageManifest;
 
-  // Fetch all files in parallel
-  const allFiles = await Promise.all(
-    filePaths.map(async (filePath) => {
-      const fileContent = filePath === skillMdPath
-        ? skillMd
-        : await fetchPrivateText(`/content/skills/${name}/${filePath}`);
-      return { path: filePath, content: fileContent };
-    }),
-  );
+  const allFiles = filePaths.map((filePath) => {
+    const fullPath = `/content/skills/${name}/${filePath}`;
+    return {
+      path: filePath,
+      content: batchResults.get(fullPath) ?? '',
+    };
+  });
 
   const allContent = allFiles.map((f) => f.content).join('');
 

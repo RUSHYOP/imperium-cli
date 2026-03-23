@@ -253,6 +253,103 @@ async function handleContentListing(env: Env, prefix: string): Promise<Response>
 }
 
 // ---------------------------------------------------------------------------
+// Batch download — fetch multiple files in one request
+// ---------------------------------------------------------------------------
+
+interface BatchRequest {
+  paths: string[];
+}
+
+interface BatchResponseItem {
+  path: string;
+  content: string | null;
+  error?: string;
+}
+
+async function handleBatchDownload(env: Env, body: BatchRequest): Promise<Response> {
+  if (!Array.isArray(body.paths) || body.paths.length === 0) {
+    return new Response(JSON.stringify({ error: 'Request body must have a non-empty "paths" array' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  // Cap at 200 files per batch to prevent abuse
+  const paths = body.paths.slice(0, 200);
+
+  const results: BatchResponseItem[] = await Promise.all(
+    paths.map(async (p): Promise<BatchResponseItem> => {
+      try {
+        // Normalise: strip leading slash, ensure content/ prefix
+        const key = p.replace(/^\//, '').replace(/^content\//, '');
+        const objectKey = `content/${key}`;
+        const object = await env.CONTENT_BUCKET.get(objectKey);
+        if (!object) {
+          return { path: p, content: null, error: 'Not found' };
+        }
+        const text = await object.text();
+        return { path: p, content: text };
+      } catch (err: any) {
+        return { path: p, content: null, error: err.message };
+      }
+    }),
+  );
+
+  return new Response(JSON.stringify({ files: results }), {
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Batch upload — upload multiple files in one request
+// ---------------------------------------------------------------------------
+
+interface UploadItem {
+  path: string;
+  content: string;
+}
+
+interface UploadRequest {
+  files: UploadItem[];
+}
+
+interface UploadResponseItem {
+  path: string;
+  ok: boolean;
+  error?: string;
+}
+
+async function handleBatchUpload(env: Env, body: UploadRequest): Promise<Response> {
+  if (!Array.isArray(body.files) || body.files.length === 0) {
+    return new Response(JSON.stringify({ error: 'Request body must have a non-empty "files" array' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  // Cap at 200 files per batch
+  const files = body.files.slice(0, 200);
+
+  const results: UploadResponseItem[] = await Promise.all(
+    files.map(async (f): Promise<UploadResponseItem> => {
+      try {
+        const key = f.path.replace(/^\//, '');
+        await env.CONTENT_BUCKET.put(key, f.content);
+        return { path: f.path, ok: true };
+      } catch (err: any) {
+        return { path: f.path, ok: false, error: err.message };
+      }
+    }),
+  );
+
+  const successCount = results.filter((r) => r.ok).length;
+  return new Response(
+    JSON.stringify({ uploaded: successCount, total: results.length, results }),
+    { headers: { 'Content-Type': 'application/json' } },
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main handler
 // ---------------------------------------------------------------------------
 
@@ -271,6 +368,18 @@ export default {
     // All other routes require auth
     const authResult = await authenticate(request, env);
     if (authResult instanceof Response) return authResult;
+
+    // Batch download — POST /batch/download
+    if (path === '/batch/download' && request.method === 'POST') {
+      const body = await request.json() as BatchRequest;
+      return handleBatchDownload(env, body);
+    }
+
+    // Batch upload — POST /batch/upload
+    if (path === '/batch/upload' && request.method === 'POST') {
+      const body = await request.json() as UploadRequest;
+      return handleBatchUpload(env, body);
+    }
 
     // Registry index files
     if (path === '/registry.json' || path === '/mcp-registry.json' || path === '/instructions-registry.json' || path === '/preset-registry.json') {
