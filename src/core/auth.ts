@@ -103,7 +103,8 @@ async function exchangeCodeForTokens(code: string, codeVerifier: string): Promis
   const email = parseEmailFromIdToken(data.id_token);
 
   return {
-    accessToken: data.id_token ?? data.access_token,
+    accessToken: data.access_token,
+    idToken: data.id_token ?? null,
     refreshToken: data.refresh_token ?? null,
     expiresAt: Date.now() + data.expires_in * 1000,
     email,
@@ -138,7 +139,8 @@ async function refreshAccessToken(refreshToken: string): Promise<AuthState> {
   const email = parseEmailFromIdToken(data.id_token);
 
   return {
-    accessToken: data.id_token ?? data.access_token,
+    accessToken: data.access_token,
+    idToken: data.id_token ?? null,
     refreshToken: data.refresh_token ?? refreshToken,
     expiresAt: Date.now() + data.expires_in * 1000,
     email,
@@ -341,9 +343,9 @@ export async function getAccessToken(): Promise<string> {
     throw new Error('Not authenticated. Run `imperium login` first.');
   }
 
-  // Token still valid
+  // Token still valid — prefer id_token for Worker auth (correct audience)
   if (Date.now() < state.expiresAt) {
-    return state.accessToken;
+    return state.idToken ?? state.accessToken;
   }
 
   // Try refresh
@@ -359,7 +361,7 @@ export async function getAccessToken(): Promise<string> {
       newState.email = state.email;
     }
     writeAuthState(newState);
-    return newState.accessToken;
+    return newState.idToken ?? newState.accessToken;
   } catch {
     deleteAuthState();
     throw new Error('Session expired. Run `imperium login` to re-authenticate.');

@@ -5,6 +5,7 @@
  */
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { execSync } from 'node:child_process';
 import matter from 'gray-matter';
 
 interface RegistryEntry {
@@ -26,6 +27,16 @@ const KIND_MAP: Record<string, string> = {
 
 const entries: RegistryEntry[] = [];
 
+/** Check if a path is git-ignored (private content). */
+function isGitIgnored(relPath: string): boolean {
+  try {
+    execSync(`git check-ignore -q ${relPath}`, { cwd: ROOT, stdio: 'pipe' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 for (const dir of DIRS) {
   const dirPath = join(CONTENT, dir);
   let children: string[];
@@ -36,6 +47,11 @@ for (const dir of DIRS) {
   }
 
   for (const child of children) {
+    const childRelPath = `content/${dir}/${child}`;
+
+    // Skip gitignored directories (private content on R2)
+    if (isGitIgnored(childRelPath)) continue;
+
     const skillPath = join(dirPath, child, 'SKILL.md');
     try {
       if (!statSync(skillPath).isFile()) continue;
