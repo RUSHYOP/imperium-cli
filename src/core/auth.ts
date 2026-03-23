@@ -273,11 +273,12 @@ export async function login(): Promise<void> {
       }
     });
 
-    // Timeout after 5 minutes
-    setTimeout(() => {
+    // Timeout after 5 minutes — unref so it doesn't keep process alive
+    const timer = setTimeout(() => {
       forceClose();
       reject(new Error('Login timed out after 5 minutes. Please try again.'));
     }, 5 * 60 * 1000);
+    timer.unref();
   });
 }
 
