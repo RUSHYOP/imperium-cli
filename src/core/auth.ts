@@ -189,6 +189,7 @@ export async function login(): Promise<void> {
   const authorizeUrl = `${AUTHORIZE_URL}?${authorizeParams}`;
 
   return new Promise<void>((resolve, reject) => {
+    const sockets = new Set<import('node:net').Socket>();
     const server = createServer(async (req, res) => {
       try {
         const url = new URL(req.url ?? '/', `http://localhost:${REDIRECT_PORT}`);
@@ -204,7 +205,7 @@ export async function login(): Promise<void> {
           const desc = url.searchParams.get('error_description') ?? error;
           res.writeHead(400, { 'Content-Type': 'text/html' });
           res.end(`<html><body><h2>Login failed</h2><p>${desc}</p><p>You can close this tab.</p></body></html>`);
-          server.close();
+          forceClose();
           reject(new Error(`Login failed: ${desc}`));
           return;
         }
@@ -213,7 +214,7 @@ export async function login(): Promise<void> {
         if (returnedState !== state) {
           res.writeHead(400, { 'Content-Type': 'text/html' });
           res.end('<html><body><h2>Invalid state</h2><p>Possible CSRF attack. Please try again.</p></body></html>');
-          server.close();
+          forceClose();
           reject(new Error('OAuth state mismatch — possible CSRF attack.'));
           return;
         }
@@ -222,7 +223,7 @@ export async function login(): Promise<void> {
         if (!code) {
           res.writeHead(400, { 'Content-Type': 'text/html' });
           res.end('<html><body><h2>No code received</h2></body></html>');
-          server.close();
+          forceClose();
           reject(new Error('No authorization code received.'));
           return;
         }
@@ -234,16 +235,26 @@ export async function login(): Promise<void> {
         res.writeHead(200, { 'Content-Type': 'text/html' });
         res.end('<html><body><h2>✔ Login successful!</h2><p>You can close this tab and return to the terminal.</p></body></html>');
 
-        server.close();
+        forceClose();
         success(`Logged in as ${authState.email ?? 'unknown'}`);
         resolve();
       } catch (err: any) {
         res.writeHead(500, { 'Content-Type': 'text/html' });
         res.end(`<html><body><h2>Error</h2><p>${err.message}</p></body></html>`);
-        server.close();
+        forceClose();
         reject(err);
       }
     });
+
+    server.on('connection', (socket) => {
+      sockets.add(socket);
+      socket.on('close', () => sockets.delete(socket));
+    });
+
+    const forceClose = () => {
+      server.close();
+      for (const s of sockets) s.destroy();
+    };
 
     server.listen(REDIRECT_PORT, '127.0.0.1', async () => {
       info('Opening browser for Microsoft sign-in...');
@@ -264,7 +275,7 @@ export async function login(): Promise<void> {
 
     // Timeout after 5 minutes
     setTimeout(() => {
-      server.close();
+      forceClose();
       reject(new Error('Login timed out after 5 minutes. Please try again.'));
     }, 5 * 60 * 1000);
   });
