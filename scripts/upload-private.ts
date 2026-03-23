@@ -191,7 +191,7 @@ async function main() {
   console.log('\nUpdating private registry indexes...');
 
   // Skill registry
-  let skillRegistry = await fetchExistingRegistry(token, 'registry.json') ?? {
+  const skillRegistry = await fetchExistingRegistry(token, 'registry.json') ?? {
     version: 1, updated_at: '', count: 0, packages: [] as any[],
   };
 
@@ -225,7 +225,7 @@ async function main() {
   skillRegistry.updated_at = new Date().toISOString();
 
   // MCP registry
-  let mcpRegistry = await fetchExistingRegistry(token, 'mcp-registry.json') ?? {
+  const mcpRegistry = await fetchExistingRegistry(token, 'mcp-registry.json') ?? {
     version: 1, updated_at: '', count: 0, mcps: [] as any[],
   };
 
@@ -241,7 +241,7 @@ async function main() {
   mcpRegistry.updated_at = new Date().toISOString();
 
   // Preset registry
-  let presetRegistry = await fetchExistingRegistry(token, 'preset-registry.json') ?? {
+  const presetRegistry = await fetchExistingRegistry(token, 'preset-registry.json') ?? {
     version: 1, updated_at: '', count: 0, presets: [] as any[],
   };
 

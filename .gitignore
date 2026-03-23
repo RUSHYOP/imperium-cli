@@ -5,5 +5,11 @@ dist/
 .venv/
 .gitnexus
 .wrangler/
+
+# Private content (hosted on R2, not in public repo)
+rxd-design-system/
+rxd-uidl-creator/
+component-index.md
+scss-class-index.md
 content/skills/miro-board-to-confluence/
 content/presets/rxd/

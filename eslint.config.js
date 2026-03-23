@@ -12,6 +12,12 @@ export default tseslint.config(
     },
   },
   {
+    files: ['scripts/**'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  {
     ignores: ['dist/**', 'node_modules/**'],
   },
 );
