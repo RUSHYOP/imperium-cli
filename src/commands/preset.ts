@@ -11,6 +11,7 @@ import {
 import { heading, success, info, warn, error as logError, verbose } from '../utils/log.js';
 import { addCommand } from './install.js';
 import { addMcpsCommand } from './mcp.js';
+import chalk from 'chalk';
 
 // ---------------------------------------------------------------------------
 // list presets
@@ -28,7 +29,8 @@ export async function listPresetsCommand(opts: GlobalOptions): Promise<void> {
     }
 
     for (const p of presets) {
-      info(`  ${p.name} (${p.adapter})`);
+      const privateBadge = p.source === 'private' ? chalk.magenta(' [private]') : '';
+      info(`  ${p.name} (${p.adapter})${privateBadge}`);
       info(`    ${p.description}`);
       info(`    ${p.skills.length} skills, ${p.mcps.length} MCPs, ${p.files.length} files`);
     }
@@ -59,7 +61,8 @@ export async function searchPresetsCommand(
     }
 
     for (const p of results) {
-      info(`  ${p.name} (${p.adapter})`);
+      const privateBadge = p.source === 'private' ? chalk.magenta(' [private]') : '';
+      info(`  ${p.name} (${p.adapter})${privateBadge}`);
       info(`    ${p.description}`);
     }
 
