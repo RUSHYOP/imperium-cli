@@ -167,6 +167,80 @@ function parseEmailFromIdToken(idToken?: string): string | null {
 // Public API
 // ---------------------------------------------------------------------------
 
+function buildSuccessPage(email: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Imperium – Logged In</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{min-height:100vh;display:flex;align-items:center;justify-content:center;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      background:#0f0f13;color:#e4e4e7}
+    .card{text-align:center;padding:3rem 2.5rem;max-width:420px;width:100%}
+    .icon{width:72px;height:72px;border-radius:50%;background:rgba(34,197,94,.12);
+      display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem}
+    .icon svg{width:36px;height:36px;color:#22c55e}
+    h1{font-size:1.5rem;font-weight:600;margin-bottom:.5rem;color:#fafafa}
+    .email{font-size:.875rem;color:#a1a1aa;margin-bottom:1.75rem}
+    .hint{font-size:.8125rem;color:#71717a;line-height:1.5}
+    .brand{margin-top:2.5rem;font-size:.75rem;letter-spacing:.05em;text-transform:uppercase;color:#3f3f46}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+      </svg>
+    </div>
+    <h1>Login successful</h1>
+    <p class="email">${email}</p>
+    <p class="hint">You can close this tab and return to the terminal.</p>
+    <p class="brand">Imperium</p>
+  </div>
+</body>
+</html>`;
+}
+
+function buildErrorPage(title: string, detail?: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Imperium – Error</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{min-height:100vh;display:flex;align-items:center;justify-content:center;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      background:#0f0f13;color:#e4e4e7}
+    .card{text-align:center;padding:3rem 2.5rem;max-width:420px;width:100%}
+    .icon{width:72px;height:72px;border-radius:50%;background:rgba(239,68,68,.12);
+      display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem}
+    .icon svg{width:36px;height:36px;color:#ef4444}
+    h1{font-size:1.5rem;font-weight:600;margin-bottom:.75rem;color:#fafafa}
+    .detail{font-size:.875rem;color:#a1a1aa;line-height:1.5}
+    .brand{margin-top:2.5rem;font-size:.75rem;letter-spacing:.05em;text-transform:uppercase;color:#3f3f46}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </div>
+    <h1>${title}</h1>
+    ${detail ? `<p class="detail">${detail}</p>` : ''}
+    <p class="brand">Imperium</p>
+  </div>
+</body>
+</html>`;
+}
+
 /**
  * Interactive browser-based login flow.
  * Opens the system browser to Microsoft's authorize endpoint,
@@ -205,8 +279,8 @@ export async function login(): Promise<void> {
         const error = url.searchParams.get('error');
         if (error) {
           const desc = url.searchParams.get('error_description') ?? error;
-          res.writeHead(400, { 'Content-Type': 'text/html' });
-          res.end(`<html><body><h2>Login failed</h2><p>${desc}</p><p>You can close this tab.</p></body></html>`);
+          res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(buildErrorPage('Login failed', desc));
           forceClose();
           reject(new Error(`Login failed: ${desc}`));
           return;
@@ -214,8 +288,8 @@ export async function login(): Promise<void> {
 
         const returnedState = url.searchParams.get('state');
         if (returnedState !== state) {
-          res.writeHead(400, { 'Content-Type': 'text/html' });
-          res.end('<html><body><h2>Invalid state</h2><p>Possible CSRF attack. Please try again.</p></body></html>');
+          res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(buildErrorPage('Invalid state', 'Possible CSRF attack. Please try again.'));
           forceClose();
           reject(new Error('OAuth state mismatch — possible CSRF attack.'));
           return;
@@ -223,8 +297,8 @@ export async function login(): Promise<void> {
 
         const code = url.searchParams.get('code');
         if (!code) {
-          res.writeHead(400, { 'Content-Type': 'text/html' });
-          res.end('<html><body><h2>No code received</h2></body></html>');
+          res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(buildErrorPage('No code received'));
           forceClose();
           reject(new Error('No authorization code received.'));
           return;
@@ -234,15 +308,15 @@ export async function login(): Promise<void> {
         const authState = await exchangeCodeForTokens(code, codeVerifier);
         writeAuthState(authState);
 
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        res.end('<html><body><h2>✔ Login successful!</h2><p>You can close this tab and return to the terminal.</p></body></html>');
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(buildSuccessPage(authState.email ?? 'unknown'));
 
         forceClose();
         success(`Logged in as ${authState.email ?? 'unknown'}`);
         resolve();
       } catch (err: any) {
-        res.writeHead(500, { 'Content-Type': 'text/html' });
-        res.end(`<html><body><h2>Error</h2><p>${err.message}</p></body></html>`);
+        res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(buildErrorPage('Error', err.message));
         forceClose();
         reject(err);
       }

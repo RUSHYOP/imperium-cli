@@ -1,7 +1,7 @@
 ---
 seo:
   title: imperium-cli — The Package Manager for AI Agent Context
-  description: Install, manage, and share skills, instructions, and curated setup presets across AI agent projects. 121+ skills, instant setup.
+  description: Install, manage, and share skills, MCP servers, instructions, and curated setup presets across AI agent projects. 118+ skills, 6 MCPs, instant setup.
 ---
 
 ::u-page-hero
@@ -50,10 +50,21 @@ AI agents are powerful out of the box — but they don't know your stack, your p
   icon: i-lucide-brain
   ---
   #title
-  121+ Knowledge Packs
+  118+ Knowledge Packs
 
   #description
   Python, Django, Go, Kotlin, React, security, testing, databases, DevOps — curated instructions your agent reads and immediately applies.
+  :::
+
+  :::u-page-feature
+  ---
+  icon: i-lucide-plug
+  ---
+  #title
+  MCP Server Configs
+
+  #description
+  Pre-configured connections to Obsidian, Atlassian, Miro, PDF tools, and more. One command wires them into your agent.
   :::
 
   :::u-page-feature
@@ -64,7 +75,7 @@ AI agents are powerful out of the box — but they don't know your stack, your p
   One-Command Presets
 
   #description
-  Bundle skills and configs into a single command. Run `imperium setup claude --preset fullstack` and ship.
+  Bundle skills, MCP servers, and configs into a single command. Run `imperium setup claude --preset fullstack` and ship.
   :::
 
   :::u-page-feature
@@ -99,17 +110,6 @@ AI agents are powerful out of the box — but they don't know your stack, your p
   #description
   Works like npm — `add`, `remove`, `update`, `list`, `search`. Plus fuzzy typo correction and `--dry-run` previews.
   :::
-
-  :::u-page-feature
-  ---
-  icon: i-lucide-zap
-  ---
-  #title
-  Instant Setup
-
-  #description
-  No config files to write. One command detects your agent, installs skills, and wires everything up automatically.
-  :::
 ::
 
 ::u-page-section
@@ -142,9 +142,10 @@ From zero to a fully equipped AI agent in three commands.
 
   ```bash [Terminal]
   imperium add skills python-patterns django-tdd security-review
+  imperium add mcps obsidian pdf-reader
   ```
 
-  Your agent now has expert Python knowledge, Django TDD patterns, and security review capabilities.
+  Your agent now has expert Python knowledge, Django TDD patterns, security review capabilities, and direct connections to Obsidian and PDF tools.
   ::
 ::
 
