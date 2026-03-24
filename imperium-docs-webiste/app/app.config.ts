@@ -9,8 +9,8 @@ export default defineAppConfig({
     branch: 'main'
   },
   docus: {
-    name: 'Imperium-CLI',
-    description: 'The package manager for AI agent context.',
+    name: 'Imperium CLI',
+    description: 'The package manager for AI agent context — install curated knowledge packs, MCP server configs, custom instructions, and presets into Claude, Copilot, Cursor, or Windsurf.',
     url: 'https://imperium.dev',
     editOnGithub: false,
     reportIssue: false
