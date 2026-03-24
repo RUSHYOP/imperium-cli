@@ -178,29 +178,63 @@ function buildSuccessPage(email: string): string {
     *{margin:0;padding:0;box-sizing:border-box}
     body{min-height:100vh;display:flex;align-items:center;justify-content:center;
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-      background:#0f0f13;color:#e4e4e7}
-    .card{text-align:center;padding:3rem 2.5rem;max-width:420px;width:100%}
-    .icon{width:72px;height:72px;border-radius:50%;background:rgba(34,197,94,.12);
-      display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem}
-    .icon svg{width:36px;height:36px;color:#22c55e}
-    h1{font-size:1.5rem;font-weight:600;margin-bottom:.5rem;color:#fafafa}
-    .email{font-size:.875rem;color:#a1a1aa;margin-bottom:1.75rem}
-    .hint{font-size:.8125rem;color:#71717a;line-height:1.5}
-    .brand{margin-top:2.5rem;font-size:.75rem;letter-spacing:.05em;text-transform:uppercase;color:#3f3f46}
+      background:#0a0a0f;color:#e4e4e7;overflow:hidden}
+    .bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+    .bg::before{content:'';position:absolute;top:-40%;left:50%;transform:translateX(-50%);
+      width:600px;height:600px;border-radius:50%;
+      background:radial-gradient(circle,rgba(34,197,94,.08) 0%,transparent 70%)}
+    .card{position:relative;z-index:1;text-align:center;padding:3rem 2.5rem;max-width:440px;width:100%;
+      animation:fadeUp .5s ease-out both}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes checkDraw{from{stroke-dashoffset:30}to{stroke-dashoffset:0}}
+    @keyframes ringPulse{0%{transform:scale(.85);opacity:0}50%{opacity:1}100%{transform:scale(1);opacity:1}}
+    .icon-wrap{position:relative;width:80px;height:80px;margin:0 auto 1.75rem}
+    .ring{width:80px;height:80px;border-radius:50%;
+      background:linear-gradient(135deg,rgba(34,197,94,.15),rgba(34,197,94,.05));
+      display:flex;align-items:center;justify-content:center;
+      animation:ringPulse .4s ease-out both}
+    .ring svg{width:36px;height:36px;color:#22c55e}
+    .ring svg path{stroke-dasharray:30;stroke-dashoffset:30;animation:checkDraw .35s ease-out .3s forwards}
+    h1{font-size:1.625rem;font-weight:700;margin-bottom:.375rem;color:#fafafa;letter-spacing:-.01em}
+    .email{display:inline-flex;align-items:center;gap:.375rem;font-size:.875rem;color:#a1a1aa;
+      margin-bottom:1.75rem;padding:.375rem .875rem;border-radius:9999px;
+      background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)}
+    .email svg{width:14px;height:14px;color:#71717a;flex-shrink:0}
+    .divider{width:48px;height:1px;background:rgba(255,255,255,.08);margin:0 auto 1.5rem}
+    .hint{font-size:.8125rem;color:#71717a;line-height:1.6}
+    .countdown{color:#52525b;font-variant-numeric:tabular-nums}
+    .brand{margin-top:2.5rem;font-size:.6875rem;letter-spacing:.08em;text-transform:uppercase;color:#27272a;
+      display:flex;align-items:center;justify-content:center;gap:.5rem}
+    .brand::before,.brand::after{content:'';width:24px;height:1px;background:#1a1a1f}
   </style>
 </head>
 <body>
+  <div class="bg"></div>
   <div class="card">
-    <div class="icon">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
-      </svg>
+    <div class="icon-wrap">
+      <div class="ring">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+        </svg>
+      </div>
     </div>
-    <h1>Login successful</h1>
-    <p class="email">${email}</p>
-    <p class="hint">You can close this tab and return to the terminal.</p>
+    <h1>You're all set</h1>
+    <p class="email">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>
+      </svg>
+      ${email}
+    </p>
+    <div class="divider"></div>
+    <p class="hint">You can close this tab and return to the terminal.<br>
+      <span class="countdown">This page will close in <strong id="sec">5</strong>s</span>
+    </p>
     <p class="brand">Imperium</p>
   </div>
+  <script>
+    let t=5;const el=document.getElementById('sec');
+    const iv=setInterval(()=>{t--;if(el)el.textContent=t;if(t<=0){clearInterval(iv);window.close()}},1000);
+  </script>
 </body>
 </html>`;
 }
