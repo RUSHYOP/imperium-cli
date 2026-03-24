@@ -56,8 +56,11 @@ function stripMarkdown(content) {
   text = text.replace(/^:{2,3}[\s\S]*?^:{2,3}$/gm, '');
   // Remove inline component syntax
   text = text.replace(/:{2,3}[a-z-]+[\s\S]*?:{2,3}/g, '');
-  // Remove HTML tags
-  text = text.replace(/<[^>]+>/g, '');
+  // Remove HTML tags (loop to handle nested/malformed tags)
+  let prev;
+  do { prev = text; text = text.replace(/<[^>]+>/g, ''); } while (text !== prev);
+  // Decode HTML entities
+  text = text.replace(/&[a-zA-Z]+;/g, ' ');
   // Collapse multiple blank lines
   text = text.replace(/\n{3,}/g, '\n\n');
   return text.trim();
