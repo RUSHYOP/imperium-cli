@@ -10,8 +10,8 @@ import type { AuthState } from './types.js';
 // Microsoft Entra ID constants
 // ---------------------------------------------------------------------------
 
-/** Replace with your actual Entra ID app registration values. */
-const CLIENT_ID = process.env.IMPERIUM_CLIENT_ID ?? '952eb2a4-55db-4a95-baae-e744293a6b90';
+/** Entra ID app registration (public client — no secret needed). */
+const CLIENT_ID = '952eb2a4-55db-4a95-baae-e744293a6b90';
 
 // Multitenant: use 'organizations' so any org account can sign in.
 // Domain restriction is enforced server-side by the Worker.
@@ -30,7 +30,7 @@ const STATE_DIR = join(homedir(), '.imperium');
 const AUTH_FILE = join(STATE_DIR, 'auth.json');
 
 function ensureStateDir(): void {
-  mkdirSync(STATE_DIR, { recursive: true });
+  mkdirSync(STATE_DIR, { recursive: true, mode: 0o700 });
 }
 
 function readAuthState(): AuthState | null {
@@ -89,8 +89,7 @@ async function exchangeCodeForTokens(code: string, codeVerifier: string): Promis
   });
 
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Token exchange failed (HTTP ${res.status}): ${text}`);
+    throw new Error(`Token exchange failed (HTTP ${res.status})`);
   }
 
   const data = await res.json() as {

@@ -10,8 +10,8 @@ import { createHash } from 'node:crypto';
 // Configuration
 // ---------------------------------------------------------------------------
 
-/** Base URL for the Cloudflare Worker gateway. Override via IMPERIUM_WORKER_URL env var. */
-const WORKER_BASE_URL = process.env.IMPERIUM_WORKER_URL ?? 'https://imperium-worker.alwayspurav.workers.dev';
+/** Base URL for the Cloudflare Worker gateway. */
+const WORKER_BASE_URL = 'https://imperium-worker.alwayspurav.workers.dev';
 
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes — same as public registry
 
