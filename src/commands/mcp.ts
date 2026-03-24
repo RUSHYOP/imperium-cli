@@ -1,5 +1,5 @@
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import type { GlobalOptions } from '../core/types.js';
 import { listMcps, searchMcps, getMcp, type McpEntry } from '../core/registry.js';
 import { resolveTarget } from '../utils/resolve-target.js';
@@ -106,6 +106,7 @@ function readMcpConfig(configPath: string): McpConfig {
 }
 
 function writeMcpConfig(configPath: string, config: McpConfig): void {
+  mkdirSync(dirname(configPath), { recursive: true });
   writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n', 'utf-8');
 }
 
