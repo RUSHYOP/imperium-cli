@@ -2,8 +2,11 @@
   "name": "imperium-cli-docs",
   "private": true,
   "scripts": {
+    "predev": "node scripts/generate-llms-txt.mjs",
     "dev": "nuxt dev --extends docus",
+    "prebuild": "node scripts/generate-llms-txt.mjs",
     "build": "nuxt build --extends docus",
+    "pregenerate": "node scripts/generate-llms-txt.mjs",
     "generate": "nuxt generate --extends docus",
     "preview": "nuxt preview --extends docus"
   },

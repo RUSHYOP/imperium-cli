@@ -1,0 +1,39 @@
+# Imperium CLI
+
+> The package manager for AI agent context — install curated knowledge packs, MCP server configs, custom instructions, and presets into Claude, Copilot, Cursor, or Windsurf.
+
+## Docs
+
+### Getting Started
+
+- [Introduction](https://imperium.dev/getting-started/introduction): What Imperium is and why you need it.
+- [Installation](https://imperium.dev/getting-started/installation): Install Imperium and get started in under a minute.
+- [Quick Start](https://imperium.dev/getting-started/quick-start): Set up a full agent project in under a minute.
+- [Registry](https://imperium.dev/getting-started/registry): Where all the knowledge packs, MCP servers, and instructions come from.
+- [Flags Reference](https://imperium.dev/getting-started/flags): Every flag you can use with Imperium commands.
+- [Troubleshooting](https://imperium.dev/getting-started/troubleshooting): Quick fixes for common issues.
+- [Authentication](https://imperium.dev/getting-started/authentication): Sign in to access organization-restricted content.
+
+### Commands
+
+- [Command Overview](https://imperium.dev/commands/overview): The full Imperium CLI command structure at a glance.
+- [setup](https://imperium.dev/commands/setup): Set up your agent environment with an optional preset.
+- [add](https://imperium.dev/commands/add): Install knowledge packs, MCP servers, or custom instructions.
+- [remove](https://imperium.dev/commands/remove): Uninstall knowledge packs or custom instructions.
+- [update](https://imperium.dev/commands/update): Update installed skills to the latest registry version.
+- [list](https://imperium.dev/commands/list): Browse the registry for skills, MCP servers, or presets.
+- [search](https://imperium.dev/commands/search): Search the registry by keyword.
+- [inspect](https://imperium.dev/commands/inspect): View full metadata for a registry item.
+- [init / detect / validate](https://imperium.dev/commands/utilities): Project housekeeping commands.
+
+### Concepts
+
+- [Knowledge Packs](https://imperium.dev/concepts/skills): Give your agent expert-level context on any topic.
+- [Folder Structure](https://imperium.dev/concepts/folder-structure): How Imperium organises agent files on disk for each supported agent.
+- [Presets](https://imperium.dev/concepts/presets): Set up your entire agent stack with one command.
+- [Supported Agents](https://imperium.dev/concepts/adapters): Every AI agent Imperium works with.
+- [Lockfile](https://imperium.dev/concepts/lockfile): How Imperium tracks what's installed in your project.
+- [Fuzzy Matching](https://imperium.dev/concepts/fuzzy-matching): How Imperium corrects typos and suggests alternatives.
+- [Skill Format](https://imperium.dev/concepts/skill-format): The anatomy of a knowledge pack and how to author your own.
+- [Custom Instructions](https://imperium.dev/concepts/instructions): Install adapter-aware instruction files into your agent environment.
+- [MCP Servers](https://imperium.dev/concepts/mcp-servers): Connect your agent to external tools via pre-configured MCP servers.

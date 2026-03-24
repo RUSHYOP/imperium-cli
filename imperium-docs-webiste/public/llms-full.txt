@@ -1,0 +1,1970 @@
+# Imperium CLI — Full Documentation
+
+> The package manager for AI agent context — install curated knowledge packs, MCP server configs, custom instructions, and presets into Claude, Copilot, Cursor, or Windsurf.
+
+---
+
+## Introduction
+
+URL: https://imperium.dev/getting-started/introduction
+
+## What is Imperium?
+
+**Imperium** is a package manager for AI agent context. It installs curated knowledge packs, custom instruction files, MCP server configurations, and pre-built agent environments — so your agent writes better code, follows your patterns, and connects to your tools from day one.
+
+Think of it as an **app store for your AI agent's brain**.
+
+## The problem it solves
+
+AI agents like Claude, Copilot, and Cursor are powerful — but out of the box they're blank slates. They don't know your stack, your team's conventions, or how to interact with your tools. Every new project means starting over: writing custom instructions, copying files, and hoping nothing drifts out of sync.
+
+Imperium solves this at the source. Instead of writing instructions that live only in one project, you install verified, versioned knowledge packs that work across every project and every agent you use. Your entire team gets the same setup in seconds.
+
+## What can Imperium install?
+
+## Supported agents
+
+| Agent | Folder structure |
+|-------|----------------|
+| Claude | `.claude/` |
+| GitHub Copilot | `.github/` |
+| Cursor | `.cursor/` |
+| Windsurf | `.windsurf/` |
+| Custom | Your choice |
+
+## How it works
+
+## Next steps
+
+---
+
+## Installation
+
+URL: https://imperium.dev/getting-started/installation
+
+## Prerequisites
+
+- **Node.js** 18 or later
+- **npm** (comes with Node.js)
+
+## Install
+
+```bash [Terminal]
+npm install -g @rushy/imperium-cli
+```
+
+## Verify
+
+```bash [Terminal]
+imperium --version
+```
+
+You should see the installed version number printed. If you get `command not found`, see the [Troubleshooting](/getting-started/troubleshooting) guide.
+
+## Update
+
+```bash [Terminal]
+npm update -g @rushy/imperium-cli
+```
+
+## Uninstall
+
+```bash [Terminal]
+npm uninstall -g @rushy/imperium-cli
+```
+
+## Next steps
+
+You're all set. Head to the [Quick Start](/getting-started/quick-start) to scaffold your first agent project.
+
+---
+
+## Quick Start
+
+URL: https://imperium.dev/getting-started/quick-start
+
+## The fastest way: use a preset
+
+A preset installs everything at once — knowledge packs, tool connections, and config files — in a single command.
+
+```bash [Terminal]
+imperium setup claude --preset fullstack
+```
+
+That's it. Your agent now has a full-stack development setup with Python, testing, security, and frontend patterns.
+
+## Build your own setup
+
+Prefer picking exactly what you want? Follow these steps:
+
+## Add MCP tool connections
+
+Connect your agent to external tools with pre-configured MCP servers:
+
+```bash [Terminal]
+imperium add mcps obsidian pdf-reader
+```
+
+See all available MCP servers:
+
+```bash [Terminal]
+imperium list mcps -d
+```
+
+## Combine presets with extras
+
+Start from a preset and layer on additional packs:
+
+```bash [Terminal]
+imperium setup claude --preset fullstack --with python-testing security-review
+```
+
+Or use `--with` during setup to add skills without a preset:
+
+```bash [Terminal]
+imperium setup claude --with python-patterns django-tdd
+```
+
+## Detect existing projects
+
+Already have agent folders in your project? Imperium can find them:
+
+```bash [Terminal]
+imperium detect
+```
+
+## Preview before writing
+
+Every command supports `--dry-run` — see exactly what would happen without touching any files:
+
+```bash [Terminal]
+imperium setup claude --preset fullstack --dry-run
+imperium add skills python-patterns --dry-run
+imperium remove skills golang-patterns --dry-run
+```
+
+## Real-world workflows
+
+### Python backend project
+
+```bash [Terminal]
+imperium setup claude
+imperium add skills python-patterns django-tdd python-testing api-design
+imperium add mcps obsidian
+```
+
+### Frontend project
+
+```bash [Terminal]
+imperium setup cursor
+imperium add skills react-patterns frontend-patterns typescript-patterns
+imperium add mcps react-grab-mcp screenshot-server
+```
+
+### Full-stack with a team
+
+```bash [Terminal]
+imperium setup claude --preset fullstack --with security-review
+# Commit imperium.lock.json to git
+# Teammates run: imperium validate
+```
+
+---
+
+## Registry
+
+URL: https://imperium.dev/getting-started/registry
+
+## How it works
+
+Imperium ships with a **built-in catalog** of every available knowledge pack and preset. When you run `imperium list skills`, there's no network call — the catalog is read instantly from the local package.
+
+Actual file contents are fetched **from GitHub on demand** when you install something with `imperium add` or `imperium setup --preset`.
+
+## What's in the registry
+
+| Catalog | Contents | Count |
+|---------|----------|-------|
+| Knowledge Packs | Agent instructions for coding, testing, design, security, and more | 118+ |
+| MCP Servers | Pre-configured tool connections (Obsidian, Atlassian, Miro, etc.) | 6 |
+| Instructions | Standalone instruction files for top-level agent guidance | 1 |
+| Presets | Curated bundles of packs + MCP servers + config files | Growing |
+
+## Browsing the registry
+
+```bash [Terminal]
+# See all knowledge packs
+imperium list skills -d
+
+# See all MCP servers
+imperium list mcps -d
+
+# See all presets
+imperium list presets
+
+# Search for something specific
+imperium search skills "api design"
+
+# View full details
+imperium inspect skills python-patterns
+```
+
+## Using a local registry
+
+For testing or private knowledge packs, point Imperium at a local directory:
+
+```bash [Terminal]
+imperium list skills --local ./my-skills
+imperium add skills my-custom-skill --local ./my-skills
+```
+
+## Version pinning
+
+Pin to a specific release for reproducibility:
+
+```bash [Terminal]
+# Pin to a tag
+imperium add skills python-patterns --tag v1.2.0
+
+# Use beta channel
+imperium add skills python-patterns --channel beta
+```
+
+---
+
+## Flags Reference
+
+URL: https://imperium.dev/getting-started/flags
+
+Every Imperium command accepts **global flags**. Individual commands add their own flags on top — documented on each command's page.
+
+## Target flags
+
+Control where files are installed.
+
+| Flag | Type | Description |
+|------|------|-------------|
+| `--root ` | `string` | Override the project root directory |
+| `--target ` | `string` | Target adapter: `claude`, `github`, `windsurf`, `cursor`, `custom` |
+
+## Write strategy flags
+
+Control how files are written when conflicts arise.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--force` | `boolean` | `false` | Overwrite existing files without prompting |
+| `--dry-run` | `boolean` | `false` | Preview all changes — no files are written |
+| `-y, --yes` | `boolean` | `false` | Skip all yes/no confirmation prompts |
+| `--no-fuzzy` | `boolean` | `false` | Disable automatic typo correction |
+| `--copy` | `boolean` | — | Copy files instead of symlinking |
+| `--symlink` | `boolean` | — | Symlink files where possible |
+| `--merge` | `boolean` | — | Merge new content into existing files |
+| `--overwrite` | `boolean` | — | Replace existing files entirely |
+| `--preserve` | `boolean` | — | Skip files the user has edited |
+
+## Registry flags
+
+Control where skills are fetched from.
+
+| Flag | Type | Description |
+|------|------|-------------|
+| `--local ` | `string` | Use a local directory as the registry source |
+| `--tag ` | `string` | Pin to a specific git tag |
+| `--channel ` | `string` | Release channel: `stable`, `beta`, `dev` |
+
+## Filter flags
+
+Filter which files are affected.
+
+| Flag | Type | Description |
+|------|------|-------------|
+| `--include ` | `string` | Only process files matching this glob |
+| `--exclude ` | `string` | Skip files matching this glob |
+
+## Query flags
+
+Format and filter output.
+
+| Flag | Type | Description |
+|------|------|-------------|
+| `--kind ` | `string` | Filter by kind: `skill`, `reference`, `preset` |
+| `--format ` | `string` | Output format: `md`, `yaml`, `json` |
+
+## Output flags
+
+Control verbosity.
+
+| Flag | Type | Description |
+|------|------|-------------|
+| `--verbose` | `boolean` | Show detailed file-by-file output |
+| `--silent` | `boolean` | Suppress all non-error output |
+
+## Flag availability by command
+
+| Flag group | setup | add | remove | update | list | search | inspect | init | detect | validate |
+|-----------|:-----:|:---:|:------:|:------:|:----:|:------:|:-------:|:----:|:------:|:--------:|
+| Target | ✓ | ✓ | ✓ | ✓ | — | — | — | ✓ | — | ✓ |
+| Write | ✓ | ✓ | ✓ | ✓ | — | — | — | — | — | — |
+| Registry | ✓ | ✓ | — | ✓ | — | — | — | — | — | — |
+| Filter | — | ✓ | — | — | — | — | — | — | — | — |
+| Query | — | — | — | — | ✓ | ✓ | ✓ | — | — | — |
+| Output | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+---
+
+## Troubleshooting
+
+URL: https://imperium.dev/getting-started/troubleshooting
+
+## "command not found" after install
+
+If `imperium` isn't recognized after installing:
+
+1. Check your global bin path:
+   ```bash [Terminal]
+   npm config get prefix
+   ```
+2. Make sure that path's `bin/` directory is in your `$PATH`
+3. On macOS with nvm:
+   ```bash [Terminal]
+   nvm use default
+   npm install -g @rushy/imperium-cli
+   ```
+
+## Can't find a knowledge pack
+
+Imperium has **fuzzy correction** — if you mistype a name, it suggests the closest match.
+
+If a pack genuinely doesn't exist:
+
+```bash [Terminal]
+# Search by keyword
+imperium search skills 
+
+# List everything
+imperium list skills
+```
+
+## Lockfile won't validate
+
+`imperium validate` checks that installed files match the lockfile. Common fixes:
+
+- **Manually edited a file?** Use `--preserve` on your next update to keep your changes
+- **Deleted a file outside of Imperium?** Reinstall it: `imperium add skills `
+- **Stale lockfile?** Regenerate it: `imperium init`
+
+## Permission errors on macOS
+
+If you see `EACCES` errors:
+
+```bash [Terminal]
+mkdir -p ~/.npm-global
+npm config set prefix '~/.npm-global'
+export PATH=~/.npm-global/bin:$PATH
+```
+
+Add the `export` line to your `~/.zshrc` to make it permanent.
+
+---
+
+## Authentication
+
+URL: https://imperium.dev/getting-started/authentication
+
+## Overview
+
+Imperium CLI supports authentication via **Microsoft Entra ID** (formerly Azure AD). Organizations can publish skills, MCP server configs, and presets that are only accessible to authenticated members of allowed domains.
+
+When browsing the registry, items that require authentication are tagged with a **`[private]`** badge.
+
+## Sign in
+
+```bash [Terminal]
+imperium login
+```
+
+This opens your browser for Microsoft sign-in. After authenticating, the CLI stores a token locally and you're ready to access organization-restricted content.
+
+## Check your status
+
+```bash [Terminal]
+imperium whoami
+```
+
+Shows your current authentication status — email address and domain.
+
+## Sign out
+
+```bash [Terminal]
+imperium logout
+```
+
+Clears your stored credentials.
+
+## How it works
+
+## When do you need authentication?
+
+You **don't** need to log in for public content. The 118+ skills, 6 MCP server configs, and instruction files in the public registry are available to everyone without authentication.
+
+Authentication is only required when your organization has published restricted content that's gated behind domain-based access control.
+
+---
+
+## Command Overview
+
+URL: https://imperium.dev/commands/overview
+
+## Command skeleton
+
+Every Imperium command follows the same pattern:
+
+```bash [Terminal]
+imperium  [type] [names...] [flags]
+```
+
+| Part | Description | Example |
+|------|-------------|---------|
+| `command` | The action to perform | `setup`, `add`, `remove`, `update` |
+| `type` | What kind of item | `skills`, `mcps`, `presets`, `instructions` |
+| `names...` | One or more item names | `python-patterns django-tdd` |
+| `flags` | Options that modify behavior | `--dry-run`, `--force`, `-y` |
+
+Not every command uses every part. Here's the full map:
+
+## Full command map
+
+```
+imperium
+├── setup [adapter] [flags]              # Scaffold an agent environment
+│   ├── --preset                   #   Apply a curated preset
+│   ├── --with                #   Add extra skills on top
+│   └── --instructions         #   Install custom instruction files
+│
+├── add  [names...] [flags]        # Install skills, MCPs, or instructions
+│   ├── --all                            #   Install every item
+│   ├── --from-file                #   Read names from a file
+│   └── --path                      #   Custom target directory
+│
+├── remove   [flags]     # Uninstall skills, MCPs, or instructions
+│
+├── update [skills...] [flags]           # Update installed skills
+│
+├── list  [flags]                  # Browse the registry
+│   └── -d, --description               #   Show descriptions
+│
+├── search   [flags]        # Search by keyword
+│
+├── inspect   [flags]        # View full metadata
+│
+├── login                                # Sign in via Microsoft Entra ID
+├── logout                               # Sign out and clear credentials
+├── whoami                               # Show authentication status
+│
+├── init [flags]                         # Initialize a lockfile
+├── detect [flags]                       # Scan for agent folders
+└── validate [flags]                     # Verify lockfile integrity
+```
+
+## Commands by category
+
+### Build your project
+
+| Command | What it does | Example |
+|---------|-------------|---------|
+| [`setup`](/commands/setup) | Scaffold an agent environment | `imperium setup claude` |
+| [`add`](/commands/add) | Install skills, MCPs, or instructions | `imperium add skills python-patterns` |
+| [`remove`](/commands/remove) | Uninstall skills, MCPs, or instructions | `imperium remove skills golang-patterns` |
+| [`update`](/commands/update) | Update to latest versions | `imperium update` |
+
+### Explore the registry
+
+| Command | What it does | Example |
+|---------|-------------|---------|
+| [`list`](/commands/list) | Browse all available items | `imperium list skills -d` |
+| [`search`](/commands/search) | Find items by keyword | `imperium search skills "api design"` |
+| [`inspect`](/commands/inspect) | View full item metadata | `imperium inspect skills python-patterns` |
+### Authentication
+
+| Command | What it does | Example |
+|---------|-------------|--------|
+| `login` | Sign in via Microsoft Entra ID | `imperium login` |
+| `logout` | Sign out and clear credentials | `imperium logout` |
+| `whoami` | Show current auth status | `imperium whoami` |
+### Project housekeeping
+
+| Command | What it does | Example |
+|---------|-------------|---------|
+| [`init`](/commands/utilities) | Create a lockfile | `imperium init` |
+| [`detect`](/commands/utilities) | Find existing agent folders | `imperium detect` |
+| [`validate`](/commands/utilities) | Check installed files match lockfile | `imperium validate` |
+
+## Global flags
+
+Every command accepts these flags. See the full [Flags Reference](/getting-started/flags) for details.
+
+| Flag | Description |
+|------|-------------|
+| `--dry-run` | Preview changes without writing files |
+| `--force` | Overwrite existing files |
+| `-y, --yes` | Skip confirmation prompts |
+| `--verbose` | Detailed output |
+| `--silent` | Suppress non-error output |
+| `--root ` | Override project root |
+| `--target ` | Target a specific agent platform |
+
+## Typical workflow
+
+```bash [Terminal]
+# 1. Scaffold your agent
+imperium setup claude
+
+# 2. Add the skills and tools you need
+imperium add skills python-patterns django-tdd security-review
+imperium add mcps obsidian pdf-reader
+
+# 3. Or use a preset for everything at once
+imperium setup claude --preset fullstack
+
+# 4. Keep skills up to date
+imperium update
+
+# 5. Share with your team via lockfile
+imperium validate
+```
+
+---
+
+## setup
+
+URL: https://imperium.dev/commands/setup
+
+## Usage
+
+```bash [Terminal]
+imperium setup [adapter] [flags]
+```
+
+## Arguments
+
+| Argument | Required | Values |
+|----------|----------|--------|
+| `adapter` | No | `claude`, `github`, `windsurf`, `cursor`, `custom` |
+
+If `--preset` is provided and `adapter` is omitted, the adapter is **inferred from the preset definition**.
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `--preset ` | Apply a named setup preset (skills + config files) |
+| `--with ` | Install additional skills after scaffolding |
+| `--instructions ` | Install custom instruction files after scaffolding |
+
+Plus all [target](/getting-started/flags#target-flags), [write](/getting-started/flags#write-strategy-flags), [registry](/getting-started/flags#registry-flags), and [output](/getting-started/flags#output-flags) flags.
+
+## What it does
+
+1. Creates the adapter folder structure (e.g., `.claude/` with `settings/`, `commands/`)
+2. If `--preset` is given: installs all skills, copies all config files from the preset
+3. If `--with` is given: installs the extra skills on top
+4. If `--instructions` is given: installs the named instruction files into the adapter-correct location
+
+## Examples
+
+### Basic scaffold
+
+```bash [Terminal]
+# Claude project
+imperium setup claude
+
+# GitHub Copilot project
+imperium setup github
+
+# Cursor project
+imperium setup cursor
+```
+
+### With a preset
+
+```bash [Terminal]
+# Scaffold + apply a curated bundle
+imperium setup claude --preset fullstack
+
+# Let the preset determine the adapter
+imperium setup --preset fullstack
+```
+
+### With extra skills
+
+```bash [Terminal]
+# Scaffold + install specific skills
+imperium setup claude --with python-patterns django-tdd
+
+# Preset + extra skills on top
+imperium setup claude --preset fullstack --with security-review
+```
+
+### With instructions
+
+```bash [Terminal]
+# Scaffold + install custom instruction files
+imperium setup claude --instructions coding-standards
+
+# Combine preset, extra skills, and instructions
+imperium setup claude --preset fullstack --with security-review --instructions coding-standards api-design
+```
+
+### Safety and preview
+
+```bash [Terminal]
+# Preview what would be created
+imperium setup claude --dry-run
+
+# Force overwrite existing folder
+imperium setup claude --force
+
+# Skip all Y/N prompts
+imperium setup claude -y
+```
+
+### Advanced
+
+```bash [Terminal]
+# Custom project root
+imperium setup claude --root /path/to/project
+
+# Pin to a specific version
+imperium setup claude --tag v1.2.0
+
+# Use beta channel
+imperium setup claude --channel beta
+
+# Copy files instead of symlinking
+imperium setup claude --copy
+```
+
+---
+
+## add
+
+URL: https://imperium.dev/commands/add
+
+## Usage
+
+```bash [Terminal]
+imperium add  [names...] [flags]
+```
+
+## Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `type` | Yes | `skills`, `mcps`, `instructions` (and singular aliases) |
+| `names...` | Varies | One or more item names. Not required if `--all` or `--from-file` is used. |
+
+## Command-specific flags
+
+| Flag | Description |
+|------|-------------|
+| `--from-file ` | Read skill names from a text file (one per line) — skills only |
+| `--all` | Install all items from the registry — skills only |
+| `--path ` | Target directory (overrides `--root`) |
+
+Plus all [target](/getting-started/flags#target-flags), [write](/getting-started/flags#write-strategy-flags), [registry](/getting-started/flags#registry-flags), [filter](/getting-started/flags#filter-flags), and [output](/getting-started/flags#output-flags) flags.
+
+## Examples
+
+### Install a single skill
+
+```bash [Terminal]
+imperium add skills python-patterns
+```
+
+### Install multiple skills
+
+```bash [Terminal]
+imperium add skills python-patterns django-tdd golang-patterns
+```
+
+### Install all skills from the registry
+
+```bash [Terminal]
+imperium add skills --all
+```
+
+### Install from a file list
+
+Create a text file with one skill name per line:
+
+```txt [skills.txt]
+python-patterns
+django-tdd
+python-testing
+security-review
+```
+
+```bash [Terminal]
+imperium add skills --from-file skills.txt
+```
+
+### Install into a specific folder
+
+```bash [Terminal]
+imperium add skills python-patterns --path .cursor
+```
+
+### Preview the install
+
+```bash [Terminal]
+imperium add skills python-patterns --dry-run
+```
+
+### Pin to a version
+
+```bash [Terminal]
+imperium add skills python-patterns --tag v1.2.0
+```
+
+### Only install markdown files
+
+```bash [Terminal]
+imperium add skills python-patterns --include "*.md"
+```
+
+### Install a custom instruction
+
+Instruction files are placed in the adapter-correct location (e.g., `CLAUDE.md` for Claude, `copilot-instructions.md` for GitHub Copilot, `rules/.md` for Cursor/Windsurf).
+
+```bash [Terminal]
+imperium add instructions coding-standards
+```
+
+### Install multiple instructions
+
+```bash [Terminal]
+imperium add instructions coding-standards api-design
+```
+
+### Install an MCP server
+
+```bash [Terminal]
+imperium add mcps obsidian
+```
+
+### Install multiple MCP servers
+
+```bash [Terminal]
+imperium add mcps obsidian pdf-reader miro-mcp
+```
+
+---
+
+## remove
+
+URL: https://imperium.dev/commands/remove
+
+## Usage
+
+```bash [Terminal]
+imperium remove   [flags]
+```
+
+## Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `type` | Yes | `skills`, `instructions` (and singular aliases) |
+| `names...` | Yes | One or more item names to remove |
+
+## Flags
+
+All [target](/getting-started/flags#target-flags), [write](/getting-started/flags#write-strategy-flags), and [output](/getting-started/flags#output-flags) flags are available.
+
+## Examples
+
+### Remove a skill
+
+```bash [Terminal]
+imperium remove skills python-patterns
+```
+
+### Remove multiple skills
+
+```bash [Terminal]
+imperium remove skills python-patterns django-tdd golang-patterns
+```
+
+### Preview what would be removed
+
+```bash [Terminal]
+imperium remove skills python-patterns --dry-run
+```
+
+### Remove without confirmation
+
+```bash [Terminal]
+imperium remove skills python-patterns -y
+```
+
+### Remove an instruction
+
+```bash [Terminal]
+imperium remove instructions coding-standards
+```
+
+---
+
+## update
+
+URL: https://imperium.dev/commands/update
+
+## Usage
+
+```bash [Terminal]
+imperium update [skills...] [flags]
+```
+
+## Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `skills...` | No | Specific skills to update. Omit to update all installed skills. |
+
+## Flags
+
+All [target](/getting-started/flags#target-flags), [write](/getting-started/flags#write-strategy-flags), [registry](/getting-started/flags#registry-flags), and [output](/getting-started/flags#output-flags) flags are available.
+
+## Examples
+
+### Update all installed skills
+
+```bash [Terminal]
+imperium update
+```
+
+### Update specific skills
+
+```bash [Terminal]
+imperium update python-patterns
+```
+
+### Update multiple skills
+
+```bash [Terminal]
+imperium update python-patterns django-tdd
+```
+
+### Preview updates without applying
+
+```bash [Terminal]
+imperium update --dry-run
+```
+
+### Update from a pinned tag
+
+```bash [Terminal]
+imperium update --tag v1.2.0
+```
+
+### Skip all prompts
+
+```bash [Terminal]
+imperium update -y
+```
+
+---
+
+## list
+
+URL: https://imperium.dev/commands/list
+
+## Usage
+
+```bash [Terminal]
+imperium list  [flags]
+```
+
+## Arguments
+
+| Argument | Required | Values |
+|----------|----------|--------|
+| `type` | Yes | `skills`, `mcps`, `presets`, `instructions` (and singular aliases) |
+
+## Command-specific flags
+
+| Flag | Description |
+|------|-------------|
+| `-d, --description [items...]` | Show descriptions. Optionally pass specific item names. |
+
+Plus all [query](/getting-started/flags#query-flags) and [output](/getting-started/flags#output-flags) flags.
+
+## Examples
+
+### List all skills
+
+```bash [Terminal]
+imperium list skills
+```
+
+### List skills with descriptions
+
+```bash [Terminal]
+imperium list skills -d
+```
+
+### Show description for specific items only
+
+```bash [Terminal]
+imperium list skills -d python-patterns django-tdd
+```
+
+### Filter by kind
+
+```bash [Terminal]
+imperium list skills --kind reference
+```
+
+### List setup presets
+
+```bash [Terminal]
+imperium list presets
+```
+
+### List MCP servers
+
+```bash [Terminal]
+imperium list mcps
+```
+
+### List MCP servers with descriptions
+
+```bash [Terminal]
+imperium list mcps -d
+```
+
+### Output as JSON
+
+```bash [Terminal]
+imperium list skills --format json
+```
+
+### List instructions
+
+```bash [Terminal]
+imperium list instructions
+```
+
+### Output as YAML
+
+```bash [Terminal]
+imperium list presets --format yaml
+```
+
+---
+
+## search
+
+URL: https://imperium.dev/commands/search
+
+## Usage
+
+```bash [Terminal]
+imperium search   [flags]
+```
+
+## Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `type` | Yes | `skills`, `presets`, `instructions` |
+| `query` | Yes | Search keyword or quoted phrase |
+
+## Flags
+
+All [query](/getting-started/flags#query-flags) and [output](/getting-started/flags#output-flags) flags are available.
+
+## Examples
+
+### Search skills by keyword
+
+```bash [Terminal]
+imperium search skills python
+```
+
+### Multi-word search
+
+```bash [Terminal]
+imperium search skills "api design"
+```
+
+### Search presets
+
+```bash [Terminal]
+imperium search presets design
+```
+
+### Output as JSON
+
+```bash [Terminal]
+imperium search skills backend --format json
+```
+
+### Search instructions
+
+```bash [Terminal]
+imperium search instructions "coding standards"
+```
+
+### Filter by kind
+
+```bash [Terminal]
+imperium search skills testing --kind reference
+```
+
+---
+
+## inspect
+
+URL: https://imperium.dev/commands/inspect
+
+## Usage
+
+```bash [Terminal]
+imperium inspect   [flags]
+```
+
+## Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `type` | Yes | `skills`, `presets`, `instructions` |
+| `name` | Yes | Exact item name |
+
+## Flags
+
+All [query](/getting-started/flags#query-flags) and [output](/getting-started/flags#output-flags) flags are available.
+
+## Examples
+
+### Inspect a skill
+
+Shows full content and metadata:
+
+```bash [Terminal]
+imperium inspect skills python-patterns
+```
+
+### Inspect a setup preset
+
+Shows included skills and files:
+
+```bash [Terminal]
+imperium inspect presets fullstack
+```
+
+### Output as YAML
+
+```bash [Terminal]
+imperium inspect skills python-patterns --format yaml
+```
+
+### Inspect an instruction
+
+```bash [Terminal]
+imperium inspect instructions coding-standards
+```
+
+### Output as JSON
+
+Useful for scripts and automation:
+
+```bash [Terminal]
+imperium inspect skills python-patterns --format json
+```
+
+---
+
+## init / detect / validate
+
+URL: https://imperium.dev/commands/utilities
+
+## init
+
+Initialize an Imperium lockfile in a project. The lockfile tracks installed skills and their versions.
+
+### Usage
+
+```bash [Terminal]
+imperium init [flags]
+```
+
+### Flags
+
+[Target](/getting-started/flags#target-flags) and [output](/getting-started/flags#output-flags) flags.
+
+### Examples
+
+```bash [Terminal]
+# Init in the auto-detected agent folder
+imperium init
+
+# Init for a specific adapter
+imperium init --target claude
+
+# Init in a custom path
+imperium init --root /path/to/project
+```
+
+---
+
+## detect
+
+Scan the current directory for known agent configuration folders.
+
+### Usage
+
+```bash [Terminal]
+imperium detect [flags]
+```
+
+Detects: `.claude/`, `.github/`, `.cursor/`, `.windsurf/`, and custom folders.
+
+### Flags
+
+[Output](/getting-started/flags#output-flags) flags only.
+
+### Examples
+
+```bash [Terminal]
+# Scan for agent folders
+imperium detect
+
+# Verbose output
+imperium detect --verbose
+```
+
+---
+
+## validate
+
+Validate that installed skills match the lockfile manifest.
+
+### Usage
+
+```bash [Terminal]
+imperium validate [flags]
+```
+
+### Flags
+
+[Target](/getting-started/flags#target-flags) and [output](/getting-started/flags#output-flags) flags.
+
+### Examples
+
+```bash [Terminal]
+# Validate the auto-detected lockfile
+imperium validate
+
+# Validate a specific adapter
+imperium validate --target claude
+
+# Full detail output
+imperium validate --verbose
+
+# Custom path
+imperium validate --root /path/to/project
+```
+
+### When validation fails
+
+| Cause | Fix |
+|-------|-----|
+| Skill file manually edited | Use `--preserve` on next update |
+| Skill removed outside Imperium | `imperium add skills ` to reinstall |
+| Stale lockfile | `imperium init` to regenerate |
+
+---
+
+## Knowledge Packs
+
+URL: https://imperium.dev/concepts/skills
+
+## What are knowledge packs?
+
+A **knowledge pack** (called a "skill" in Imperium) is a set of curated instructions that teach your AI agent how to work with a specific technology, framework, or practice. Once installed, your agent reads these files and immediately applies the knowledge.
+
+Think of it like giving your agent a cheat sheet — except it actually reads the whole thing.
+
+## What's inside a pack
+
+Each pack contains Markdown files with instructions, patterns, rules, and examples:
+
+```
+python-patterns/
+├── SKILL.md              # Main instructions
+├── examples/
+│   ├── decorators.md     # Pattern examples
+│   └── generators.md
+└── rules/
+    └── naming.md         # Coding conventions
+```
+
+## Browsing packs
+
+```bash [Terminal]
+# See everything available (118+ packs)
+imperium list skills
+
+# With descriptions
+imperium list skills -d
+
+# Search by keyword
+imperium search skills "api design"
+
+# View the full contents of a pack
+imperium inspect skills python-patterns
+```
+
+## Installing packs
+
+```bash [Terminal]
+# One pack
+imperium add skills python-patterns
+
+# Several at once
+imperium add skills python-patterns django-tdd security-review
+
+# Everything in the registry
+imperium add skills --all
+
+# From a list file
+imperium add skills --from-file my-skills.txt
+```
+
+## Removing packs
+
+```bash [Terminal]
+imperium remove skills python-patterns
+```
+
+## Updating packs
+
+```bash [Terminal]
+# Update all installed packs
+imperium update
+
+# Update specific ones
+imperium update python-patterns django-tdd
+```
+
+## Popular packs
+
+## Skill categories
+
+The 121+ packs span a wide range of topics:
+
+| Category | Example packs |
+|----------|--------------|
+| **Backend** | `python-patterns`, `golang-patterns`, `kotlin-patterns`, `api-design` |
+| **Frontend** | `react-patterns`, `frontend-patterns`, `typescript-patterns` |
+| **Testing** | `django-tdd`, `python-testing`, `integration-testing` |
+| **Security** | `security-review`, `owasp-top10`, `secure-coding` |
+| **Databases** | `postgres-patterns`, `redis-patterns`, `sql-optimization` |
+| **DevOps** | `docker-patterns`, `ci-cd-patterns`, `kubernetes-basics` |
+| **Design** | `uidl-components`, `design-systems`, `accessibility` |
+
+Run `imperium list skills -d` to see the full catalog with descriptions.
+
+## Write strategy
+
+When installing packs, you can control how conflicts are handled:
+
+```bash [Terminal]
+# Overwrite existing files
+imperium add skills python-patterns --overwrite
+
+# Keep your manual edits
+imperium add skills python-patterns --preserve
+
+# Merge new content into existing files
+imperium add skills python-patterns --merge
+
+# Copy instead of symlink
+imperium add skills python-patterns --copy
+```
+
+---
+
+## Folder Structure
+
+URL: https://imperium.dev/concepts/folder-structure
+
+## Claude
+
+`imperium setup claude` creates the following structure in your project root:
+
+```
+.claude/
+├── rules/              # Project rules and constraints
+├── commands/           # Custom slash commands
+├── agents/             # ← Generated skill agent files land here
+├── skills/             # ← Raw knowledge pack files land here
+└── todos/              # Task tracking
+```
+
+### How skills are installed
+
+When you run `imperium add skills `, Imperium does two things:
+
+**1. Writes the raw skill to `skills/`**
+
+The skill's full content is written as a Markdown file inside `.claude/skills/`. Your agent can reference it directly.
+
+**2. Generates a Claude agent file in `agents/`**
+
+Imperium generates a native Claude agent file at `.claude/agents/.md`:
+
+```markdown [.claude/agents/python-patterns.md]
+---
+name: python-patterns
+description: Idiomatic Python patterns, project structure, and best practices.
+---
+
+# Python Patterns
+
+[skill content here...]
+```
+
+Claude reads these files automatically — each one becomes an available agent context. No manual wiring needed.
+
+### Scaffold-only folders
+
+These folders are created by `imperium setup claude` but not written to by the installer:
+
+| Folder | Purpose |
+|--------|---------|
+| `rules/` | Project-level rules and constraints you write yourself |
+| `commands/` | Custom slash commands for Claude |
+| `todos/` | Task tracking files |
+
+---
+
+## GitHub Copilot
+
+Support for GitHub Copilot folder structure is in progress. The scaffold already works — full native file generation is coming in a future release.
+
+---
+
+## Cursor
+
+Support for Cursor folder structure is in progress. The scaffold already works — full native file generation is coming in a future release.
+
+---
+
+## Windsurf
+
+Support for Windsurf folder structure is in progress. The scaffold already works — full native file generation is coming in a future release.
+
+---
+
+## Custom
+
+Custom agent support lets you point Imperium at any directory. Full documentation coming alongside the other adapter guides.
+
+---
+
+## Presets
+
+URL: https://imperium.dev/concepts/presets
+
+## What is a preset?
+
+A **preset** is a curated bundle that sets up your agent with everything it needs for a specific workflow. Instead of installing packs and tools one by one, a preset does it all at once.
+
+One command. Full stack.
+
+```bash [Terminal]
+imperium setup claude --preset fullstack
+```
+
+## What a preset includes
+
+Each preset bundles:
+- **Knowledge packs** — the agent instructions to install
+- **MCP servers** — pre-configured tool connections
+- **Config files** — rules, commands, reference docs, and settings to copy
+
+## What happens when you apply one
+
+When you run `imperium setup claude --preset fullstack`:
+
+## Browsing presets
+
+```bash [Terminal]
+# See all presets
+imperium list presets
+
+# Search
+imperium search presets design
+
+# View what's inside
+imperium inspect presets fullstack
+```
+
+## Applying presets
+
+```bash [Terminal]
+# Specify your agent + preset
+imperium setup claude --preset fullstack
+
+# Let the preset pick the agent
+imperium setup --preset fullstack
+
+# Add extra packs on top
+imperium setup claude --preset fullstack --with security-review
+
+# Preview without writing
+imperium setup --preset fullstack --dry-run
+```
+
+---
+
+## Supported Agents
+
+URL: https://imperium.dev/concepts/adapters
+
+## Pick your agent
+
+Imperium knows how to set up each of these AI agents. Run `imperium setup ` and the right folder structure is created automatically.
+
+### Claude
+
+```bash [Terminal]
+imperium setup claude
+```
+
+Creates:
+
+```
+.claude/
+├── settings/
+├── commands/
+└── skills/          # ← knowledge packs go here
+```
+
+---
+
+### GitHub Copilot
+
+```bash [Terminal]
+imperium setup github
+```
+
+Creates:
+
+```
+.github/
+└── copilot/
+    ├── instructions/
+    └── skills/      # ← knowledge packs go here
+```
+
+---
+
+### Cursor
+
+```bash [Terminal]
+imperium setup cursor
+```
+
+Creates:
+
+```
+.cursor/
+├── rules/
+└── skills/          # ← knowledge packs go here
+```
+
+---
+
+### Windsurf
+
+```bash [Terminal]
+imperium setup windsurf
+```
+
+Creates:
+
+```
+.windsurf/
+├── rules/
+└── skills/          # ← knowledge packs go here
+```
+
+---
+
+### Custom
+
+```bash [Terminal]
+imperium setup custom --root ./my-agent
+```
+
+For agents not in the list above. Point Imperium at your own directory and it installs packs there.
+
+## Detect what's already set up
+
+Working in a project that already has agent folders?
+
+```bash [Terminal]
+imperium detect
+```
+
+Scans the current directory and tells you which agents are configured.
+
+## Target a specific agent
+
+When you have multiple agent folders in the same project, tell Imperium which one to use:
+
+```bash [Terminal]
+# Install packs into Claude specifically
+imperium add skills python-patterns --target claude
+
+# Initialize the lockfile for Copilot
+imperium init --target github
+```
+
+---
+
+## Lockfile
+
+URL: https://imperium.dev/concepts/lockfile
+
+## What is the lockfile?
+
+Every time you install or remove something, Imperium updates `imperium.lock.json` in your project. This file records exactly what's installed, where it came from, and when it was last synced.
+
+Think of it like `package-lock.json` for your agent's knowledge.
+
+## Lockfile structure
+
+```json [imperium.lock.json]
+{
+  "version": 1,
+  "preset": "claude",
+  "root": ".claude",
+  "packages": {
+    "python-patterns": {
+      "name": "python-patterns",
+      "kind": "skill",
+      "version": "0.0.0",
+      "source": "github:RUSHYOP/imperium-cli",
+      "checksum": "a1b2c3d4e5f6...",
+      "installedPath": ".claude/skills/python-patterns",
+      "installedAt": "2026-03-19T00:00:00.000Z",
+      "lastSync": "2026-03-19T00:00:00.000Z"
+    }
+  }
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `version` | Lockfile format version |
+| `preset` | Which adapter was used during setup |
+| `root` | The agent folder root (e.g., `.claude`) |
+| `packages` | Map of every installed item with metadata |
+
+Each package entry tracks:
+
+- **name** — Registry identifier
+- **kind** — `skill`, `reference`, or `preset`
+- **source** — Where it was fetched from
+- **checksum** — Content hash for integrity verification
+- **installedPath** — Where the files live on disk
+- **installedAt** — First install timestamp
+- **lastSync** — Last update timestamp
+
+## Creating a lockfile
+
+```bash [Terminal]
+# Auto-create during setup
+imperium setup claude
+
+# Or initialize manually
+imperium init
+```
+
+## Team sharing
+
+Commit `imperium.lock.json` to version control. When a teammate clones the repo, they can see exactly what's installed and verify integrity:
+
+```bash [Terminal]
+imperium validate
+```
+
+## Validation
+
+`imperium validate` compares installed files against the lockfile:
+
+```bash [Terminal]
+# Check everything
+imperium validate
+
+# Verbose output — shows each file
+imperium validate --verbose
+```
+
+| Status | Meaning |
+|--------|---------|
+| Pass | All files match their recorded checksums |
+| Fail — file modified | A skill file was edited outside Imperium |
+| Fail — file missing | A tracked file was deleted |
+| Fail — stale lockfile | Lockfile references items that don't exist |
+
+### Fixing validation failures
+
+```bash [Terminal]
+# File was manually edited — preserve your changes on next update
+imperium update --preserve
+
+# File was deleted — reinstall it
+imperium add skills python-patterns
+
+# Stale lockfile — regenerate
+imperium init
+```
+
+---
+
+## Fuzzy Matching
+
+URL: https://imperium.dev/concepts/fuzzy-matching
+
+## How it works
+
+Imperium uses **Levenshtein distance** to detect typos in commands, skill names, and adapter names. When you make a mistake, it suggests the closest match instead of failing silently.
+
+## Command typos
+
+```bash [Terminal]
+$ imperium dowload test
+⚠ Unknown command 'dowload'. Did you mean 'download'?
+```
+
+## Skill name typos
+
+```bash [Terminal]
+$ imperium add skills opneapi
+⚠ 'opneapi' not found — using 'openapi' instead.
+```
+
+## Adapter typos
+
+```bash [Terminal]
+$ imperium setup .claud
+⚠ '.claud' not found — using '.claude' instead.
+```
+
+## Disabling fuzzy correction
+
+If you want exact matching only (useful for CI/CD scripts):
+
+```bash [Terminal]
+imperium add skills python-patterns --no-fuzzy
+```
+
+The `--no-fuzzy` flag disables all automatic correction. The command will fail with an error instead of suggesting alternatives.
+
+---
+
+## Skill Format
+
+URL: https://imperium.dev/concepts/skill-format
+
+## Directory structure
+
+Each skill is a folder in the registry containing at least one `SKILL.md` file:
+
+```
+python-patterns/
+├── SKILL.md              # Main instructions (required)
+├── examples/
+│   ├── decorators.md     # Pattern examples
+│   └── generators.md
+├── rules/
+│   └── naming.md         # Coding conventions
+├── references/
+│   └── stdlib.md         # Reference material
+└── templates/
+    └── project.md        # Starter templates
+```
+
+## SKILL.md frontmatter
+
+Every `SKILL.md` uses YAML frontmatter to declare metadata:
+
+```markdown [SKILL.md]
+---
+name: python-patterns
+version: 1.0.0
+description: >
+  Use when working on Python projects. Covers idiomatic patterns,
+  project structure, and best practices.
+kind: skill
+tags: [python, backend, patterns]
+targets: [claude, cursor]
+aliases: [py-patterns, python]
+dependencies: [api-design]
+author: your-name
+license: MIT
+---
+
+# Python Patterns
+
+Your AI agent instructions go here. Write them as if you're
+briefing a senior developer who will follow your guidance exactly.
+
+## Decorators
+Use decorators for cross-cutting concerns like logging,
+caching, and access control...
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | Yes | Unique identifier, must match the folder name |
+| `description` | Yes | What the skill does and when to use it |
+| `version` | Yes | Semantic version string, e.g. `1.0.0` |
+| `kind` | No | `skill` (default), `reference`, or `preset` |
+| `tags` | No | Keywords for search and filtering |
+| `aliases` | No | Alternative names users can reference the skill by |
+| `targets` | No | Limit to specific adapters: `claude`, `github`, `cursor`, `windsurf`, `custom` |
+| `dependencies` | No | Other skills that must be installed alongside this one |
+| `includes` | No | Glob patterns selecting which files to install |
+| `sources` | No | Additional source URLs or paths to pull files from |
+| `scripts` | No | Scripts to run after install |
+| `assets` | No | Static assets bundled with the skill |
+| `examples` | No | Example files shown during `inspect` |
+| `author` | No | Author name or handle |
+| `license` | No | License identifier, e.g. `MIT` |
+| `deprecated` | No | Mark as deprecated — warns users on install |
+| `updated_at` | No | ISO date of last update |
+
+## Subfolders
+
+Skills can include optional subfolders:
+
+| Folder | Purpose |
+|--------|---------|
+| `examples/` | Worked examples and pattern demonstrations |
+| `rules/` | Coding conventions and constraints |
+| `references/` | Background material and documentation |
+| `templates/` | Starter code and project scaffolds |
+| `scripts/` | Automation scripts |
+| `evals/` | Test cases and evaluation criteria |
+
+## Using a local registry
+
+Test your own skills before publishing:
+
+```bash [Terminal]
+# Point Imperium at a local directory
+imperium add skills my-custom-skill --local ./my-skills
+
+# List from a local source
+imperium list skills --local ./my-skills
+
+# Inspect local skill metadata
+imperium inspect skills my-custom-skill --local ./my-skills
+```
+
+## Custom registries
+
+Point to any GitHub repo with a `skills/` directory:
+
+```bash [Terminal]
+imperium list skills --registry your-org/your-repo
+imperium add skills my-skill --registry your-org/your-repo#dev
+```
+
+---
+
+## Custom Instructions
+
+URL: https://imperium.dev/concepts/instructions
+
+## What are instructions?
+
+**Instructions** are standalone Markdown files that provide top-level guidance to your AI agent. Unlike knowledge packs (which are directories of files installed into a `skills/` folder), an instruction file is placed at the adapter-specific root location where the agent reads it automatically.
+
+Think of it as the **main rulebook** your agent follows for every conversation.
+
+## How they differ from knowledge packs
+
+| | Knowledge Packs | Instructions |
+|-|----------------|--------------|
+| **Format** | Directory of files | Single Markdown file |
+| **Location** | `/skills//` | Adapter-specific root (see below) |
+| **Purpose** | Deep-dive topic expertise | Top-level project rules and guidelines |
+| **Command** | `imperium add skills ` | `imperium add instructions ` |
+
+## Where instructions are placed
+
+Imperium knows the correct file path for each adapter:
+
+| Adapter | Instruction file location |
+|---------|--------------------------|
+| Claude | `CLAUDE.md` |
+| GitHub Copilot | `copilot-instructions.md` |
+| Cursor | `rules/.md` |
+| Windsurf | `rules/.md` |
+| Custom | `rules/.md` |
+
+## Browsing instructions
+
+```bash [Terminal]
+# List all available instructions
+imperium list instructions
+
+# Search by keyword
+imperium search instructions "coding standards"
+
+# View the full content of an instruction
+imperium inspect instructions coding-standards
+```
+
+## Installing instructions
+
+```bash [Terminal]
+# Install a single instruction
+imperium add instructions coding-standards
+
+# Install multiple instructions
+imperium add instructions coding-standards api-design
+
+# Install during setup
+imperium setup claude --instructions coding-standards
+```
+
+## Removing instructions
+
+```bash [Terminal]
+imperium remove instructions coding-standards
+```
+
+## Using with setup
+
+The `--instructions` flag on `imperium setup` installs instruction files after scaffolding. You can combine it with presets and extra skills:
+
+```bash [Terminal]
+# Full setup: adapter + preset + skills + instructions
+imperium setup claude --preset fullstack --with security-review --instructions coding-standards api-design
+```
+
+## Creating your own instructions
+
+To add an instruction to the Imperium registry, create a Markdown file in the `content/instructions/` directory with YAML frontmatter:
+
+```md [content/instructions/coding-standards.md]
+---
+name: coding-standards
+description: Team coding standards and conventions
+---
+
+# Coding Standards
+
+Follow these conventions in all code you write...
+```
+
+The `name` and `description` fields in the frontmatter are used for registry listing, search, and display.
+
+---
+
+## MCP Servers
+
+URL: https://imperium.dev/concepts/mcp-servers
+
+## What are MCP servers?
+
+The **Model Context Protocol** (MCP) lets AI agents interact with external tools and services. Instead of manually configuring JSON server definitions, Imperium ships pre-configured MCP server configs that wire into your agent with a single command.
+
+## Available MCP servers
+
+| Name | Description |
+|------|-------------|
+| `atlassian` | Connect to Atlassian Jira and Confluence via MCP remote proxy |
+| `miro-mcp` | Interact with Miro boards — create diagrams, tables, docs, and read board content |
+| `obsidian` | Read, search, and manage notes in an Obsidian vault |
+| `pdf-reader` | Read PDF files and extract text, metadata, images, and page info |
+| `react-grab-mcp` | Grab and inspect React component trees from running apps |
+| `screenshot-server` | Take screenshots of screens, windows, and UI elements |
+
+## Browsing MCP servers
+
+```bash [Terminal]
+# List all available MCP servers
+imperium list mcps
+
+# With descriptions
+imperium list mcps -d
+
+# View full details for a specific server
+imperium inspect mcps obsidian
+```
+
+## Installing MCP servers
+
+```bash [Terminal]
+# Install a single MCP server
+imperium add mcps obsidian
+
+# Install multiple at once
+imperium add mcps obsidian pdf-reader miro-mcp
+```
+
+## Configuration placeholders
+
+Some MCP servers require configuration values specific to your environment — like file paths or API tokens. These are represented as **placeholders** in the format `{{PLACEHOLDER_NAME}}`.
+
+When you install an MCP server with placeholders, Imperium will prompt you to provide the values:
+
+```bash [Terminal]
+imperium add mcps obsidian
+# → Prompts for: OBSIDIAN_VAULT_PATH (Absolute path to your Obsidian vault)
+```
+
+Items with required configuration show a **`[requires config]`** badge when listed.
+
+## Where MCP configs are installed
+
+MCP server definitions are written as JSON and placed in the adapter-specific location:
+
+| Agent | Location |
+|-------|----------|
+| Claude | `.claude/settings.local.json` under `mcpServers` |
+| GitHub Copilot | `.github/copilot/mcp.json` |
+| Cursor | `.cursor/mcp.json` |
+
+## Using with presets
+
+Presets can bundle MCP servers alongside skills. When you apply a preset that includes MCPs, they're installed automatically:
+
+```bash [Terminal]
+imperium setup claude --preset fullstack
+```
+
+## Using with setup
+
+Add MCP servers during initial agent setup:
+
+```bash [Terminal]
+imperium setup claude --with python-patterns
+imperium add mcps obsidian pdf-reader
+```
+
+## Removing MCP servers
+
+```bash [Terminal]
+imperium remove mcps obsidian
+```
