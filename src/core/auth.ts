@@ -222,7 +222,7 @@ function buildSuccessPage(email: string): string {
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>
       </svg>
-      ${email}
+      ${escapeHtml(email)}
     </p>
     <div class="divider"></div>
     <p class="hint">You can close this tab and return to the terminal.</p>
@@ -235,7 +235,13 @@ function buildSuccessPage(email: string): string {
 </html>`;
 }
 
+function escapeHtml(s: string): string {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 function buildErrorPage(title: string, detail?: string): string {
+  const safeTitle = escapeHtml(title);
+  const safeDetail = detail ? escapeHtml(detail) : undefined;
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -263,8 +269,8 @@ function buildErrorPage(title: string, detail?: string): string {
         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
       </svg>
     </div>
-    <h1>${title}</h1>
-    ${detail ? `<p class="detail">${detail}</p>` : ''}
+    <h1>${safeTitle}</h1>
+    ${safeDetail ? `<p class="detail">${safeDetail}</p>` : ''}
     <p class="brand">Imperium</p>
   </div>
 </body>
