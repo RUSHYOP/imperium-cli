@@ -225,14 +225,11 @@ function buildSuccessPage(email: string): string {
       ${email}
     </p>
     <div class="divider"></div>
-    <p class="hint">You can close this tab and return to the terminal.<br>
-      <span class="countdown">This page will close in <strong id="sec">5</strong>s</span>
-    </p>
+    <p class="hint">You can close this tab and return to the terminal.</p>
     <p class="brand">Imperium</p>
   </div>
   <script>
-    let t=5;const el=document.getElementById('sec');
-    const iv=setInterval(()=>{t--;if(el)el.textContent=t;if(t<=0){clearInterval(iv);window.close()}},1000);
+    try{window.close()}catch(e){}
   </script>
 </body>
 </html>`;
