@@ -95,19 +95,62 @@ export async function inspectMcpCommand(name: string, opts: GlobalOptions): Prom
 // add mcps
 // ---------------------------------------------------------------------------
 
-interface McpConfig {
-  mcpServers?: Record<string, { command: string; args: string[]; env?: Record<string, string> }>;
+interface McpServerEntry {
+  command: string;
+  args: string[];
+  env?: Record<string, string>;
+}
+
+/** Standard .mcp.json format (Claude, Windsurf, Cursor, custom). */
+interface StandardMcpConfig {
+  mcpServers?: Record<string, McpServerEntry>;
   [key: string]: unknown;
 }
 
-function readMcpConfig(configPath: string): McpConfig {
-  if (!existsSync(configPath)) return { mcpServers: {} };
+/** GitHub Copilot .github/mcp.json format. */
+interface GitHubMcpConfig {
+  servers?: Record<string, McpServerEntry>;
+  [key: string]: unknown;
+}
+
+type McpConfig = StandardMcpConfig | GitHubMcpConfig;
+
+function isGitHubTarget(preset: string): boolean {
+  return preset === 'github';
+}
+
+function getMcpConfigPath(rootDir: string, preset: string): string {
+  if (isGitHubTarget(preset)) {
+    // GitHub Copilot: .github/mcp.json
+    return join(rootDir, 'mcp.json');
+  }
+  // All others: .mcp.json in project root (one level above .claude/.windsurf/.cursor)
+  return join(dirname(rootDir), '.mcp.json');
+}
+
+function getServersKey(preset: string): 'servers' | 'mcpServers' {
+  return isGitHubTarget(preset) ? 'servers' : 'mcpServers';
+}
+
+function readMcpConfig(configPath: string, preset: string): McpConfig {
+  const key = getServersKey(preset);
+  if (!existsSync(configPath)) return { [key]: {} };
   return JSON.parse(readFileSync(configPath, 'utf-8'));
 }
 
 function writeMcpConfig(configPath: string, config: McpConfig): void {
   mkdirSync(dirname(configPath), { recursive: true });
   writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n', 'utf-8');
+}
+
+function getServers(config: McpConfig, preset: string): Record<string, McpServerEntry> {
+  const key = getServersKey(preset);
+  return (config as Record<string, unknown>)[key] as Record<string, McpServerEntry> ?? {};
+}
+
+function setServers(config: McpConfig, preset: string, servers: Record<string, McpServerEntry>): void {
+  const key = getServersKey(preset);
+  (config as Record<string, unknown>)[key] = servers;
 }
 
 async function resolvePlaceholders(
@@ -168,16 +211,16 @@ export async function addMcpsCommand(
   }
 
   const target = await resolveTarget(opts);
-  const configPath = join(target.rootDir, '.mcp.json');
+  const configPath = getMcpConfigPath(target.rootDir, target.preset);
 
-  const config = readMcpConfig(configPath);
-  if (!config.mcpServers) config.mcpServers = {};
+  const config = readMcpConfig(configPath, target.preset);
+  const servers = getServers(config, target.preset);
 
   for (const name of parsed) {
     try {
       const mcp = await getMcp(name);
 
-      if (config.mcpServers[name] && !opts.force) {
+      if (servers[name] && !opts.force) {
         warn(`${name} already configured — use --force to overwrite`);
         continue;
       }
@@ -186,7 +229,7 @@ export async function addMcpsCommand(
 
       const { args, env } = await resolvePlaceholders(mcp, opts);
 
-      const entry: { command: string; args: string[]; env?: Record<string, string> } = {
+      const entry: McpServerEntry = {
         command: mcp.command,
         args,
       };
@@ -201,7 +244,7 @@ export async function addMcpsCommand(
         continue;
       }
 
-      config.mcpServers[name] = entry;
+      servers[name] = entry;
       success(`${name} added`);
     } catch (err: any) {
       logError(`${name}: ${err.message}`);
@@ -209,6 +252,7 @@ export async function addMcpsCommand(
   }
 
   if (!opts.dryRun) {
+    setServers(config, target.preset, servers);
     writeMcpConfig(configPath, config);
     success(`MCP config written to ${configPath}`);
   }
@@ -231,20 +275,21 @@ export async function removeMcpsCommand(
   }
 
   const target = await resolveTarget(opts);
-  const configPath = join(target.rootDir, '.mcp.json');
+  const configPath = getMcpConfigPath(target.rootDir, target.preset);
+  const configName = isGitHubTarget(target.preset) ? '.github/mcp.json' : '.mcp.json';
 
   if (!existsSync(configPath)) {
-    logError(`No .mcp.json found at ${configPath}`);
+    logError(`No ${configName} found at ${configPath}`);
     process.exitCode = 1;
     return;
   }
 
-  const config = readMcpConfig(configPath);
-  if (!config.mcpServers) config.mcpServers = {};
+  const config = readMcpConfig(configPath, target.preset);
+  const servers = getServers(config, target.preset);
 
   for (const name of parsed) {
-    if (!config.mcpServers[name]) {
-      warn(`${name} not found in .mcp.json`);
+    if (!servers[name]) {
+      warn(`${name} not found in ${configName}`);
       continue;
     }
 
@@ -253,11 +298,12 @@ export async function removeMcpsCommand(
       continue;
     }
 
-    delete config.mcpServers[name];
+    delete servers[name];
     success(`${name} removed`);
   }
 
   if (!opts.dryRun) {
+    setServers(config, target.preset, servers);
     writeMcpConfig(configPath, config);
     success(`MCP config updated at ${configPath}`);
   }
