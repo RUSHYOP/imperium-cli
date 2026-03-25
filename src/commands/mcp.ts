@@ -1,7 +1,9 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { execSync } from 'node:child_process';
 import type { GlobalOptions } from '../core/types.js';
 import { listMcps, searchMcps, getMcp, type McpEntry } from '../core/registry.js';
+import { fetchMcpBundleFiles } from '../core/private-registry.js';
 import { resolveTarget } from '../utils/resolve-target.js';
 import { heading, success, info, warn, error as logError, list } from '../utils/log.js';
 import { input } from '@inquirer/prompts';
@@ -198,6 +200,63 @@ async function resolvePlaceholders(
   return { args, env };
 }
 
+// ---------------------------------------------------------------------------
+// MCP bundle installation
+// ---------------------------------------------------------------------------
+
+async function installMcpBundles(
+  mcpName: string,
+  mcp: McpEntry,
+  projectRoot: string,
+): Promise<void> {
+  if (!mcp.bundles) return;
+
+  for (const bundle of mcp.bundles) {
+    const destDir = join(projectRoot, bundle.dest);
+
+    // Skip if already installed (directory exists with files)
+    if (existsSync(destDir)) {
+      info(`  Bundle ${bundle.name} already exists at ${bundle.dest}/, skipping`);
+      continue;
+    }
+
+    info(`  Downloading bundle: ${bundle.name}...`);
+    const files = await fetchMcpBundleFiles(mcpName, bundle.name);
+
+    // Write all files
+    for (const file of files) {
+      const filePath = join(destDir, file.path);
+      mkdirSync(dirname(filePath), { recursive: true });
+      writeFileSync(filePath, file.content, 'utf-8');
+    }
+    success(`  ${bundle.name}: ${files.length} files → ${bundle.dest}/`);
+
+    // Run post-install command (e.g., npm install)
+    if (bundle.postInstall) {
+      info(`  Running: ${bundle.postInstall}...`);
+      try {
+        execSync(bundle.postInstall, {
+          cwd: destDir,
+          stdio: 'inherit',
+          timeout: 120_000,
+        });
+        success(`  Post-install complete`);
+      } catch (err: any) {
+        warn(`  Post-install failed: ${err.message}`);
+      }
+    }
+  }
+
+  // Generate config file if specified
+  if (mcp.configFile) {
+    const cfgPath = join(projectRoot, mcp.configFile.path);
+    if (!existsSync(cfgPath)) {
+      writeFileSync(cfgPath, JSON.stringify(mcp.configFile.content, null, 2) + '\n', 'utf-8');
+      success(`  Config written: ${mcp.configFile.path}`);
+    }
+  }
+}
+
 export async function addMcpsCommand(
   names: string[],
   opts: GlobalOptions,
@@ -212,6 +271,7 @@ export async function addMcpsCommand(
 
   const target = await resolveTarget(opts);
   const configPath = getMcpConfigPath(target.rootDir, target.preset);
+  const projectRoot = dirname(target.rootDir);
 
   const config = readMcpConfig(configPath, target.preset);
   const servers = getServers(config, target.preset);
@@ -227,6 +287,11 @@ export async function addMcpsCommand(
 
       info(`Adding MCP: ${name}...`);
 
+      // Install bundles (download files from R2 and copy to project)
+      if (mcp.bundles && mcp.bundles.length > 0 && !opts.dryRun) {
+        await installMcpBundles(name, mcp, projectRoot);
+      }
+
       const { args, env } = await resolvePlaceholders(mcp, opts);
 
       const entry: McpServerEntry = {
@@ -241,6 +306,11 @@ export async function addMcpsCommand(
       if (opts.dryRun) {
         info(`Would add to ${configPath}:`);
         info(`  "${name}": ${JSON.stringify(entry, null, 2)}`);
+        if (mcp.bundles) {
+          for (const b of mcp.bundles) {
+            info(`  Would install bundle: ${b.name} → ${b.dest}/`);
+          }
+        }
         continue;
       }
 

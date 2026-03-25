@@ -399,6 +399,49 @@ export async function fetchPrivatePresetFile(presetName: string, filePath: strin
 }
 
 // ---------------------------------------------------------------------------
+// Public API — MCP Bundles
+// ---------------------------------------------------------------------------
+
+/**
+ * Fetch all files for an MCP bundle from R2.
+ * Used when an MCP declares `bundles` that need to be copied into the project.
+ */
+export async function fetchMcpBundleFiles(
+  mcpName: string,
+  bundleName: string,
+): Promise<Array<{ path: string; content: string }>> {
+  // List files in the bundle directory
+  const filesJson = await fetchPrivateText(`/content/mcp-bundles/${mcpName}/${bundleName}`);
+  const filePaths = JSON.parse(filesJson) as string[];
+
+  if (filePaths.length === 0) {
+    throw new Error(`MCP bundle '${mcpName}/${bundleName}' has no files.`);
+  }
+
+  const fullPaths = filePaths.map((f) => `/content/mcp-bundles/${mcpName}/${bundleName}/${f}`);
+
+  // Batch download in chunks of 150 (Worker caps at 200 per request)
+  const BATCH_SIZE = 150;
+  const allResults = new Map<string, string>();
+
+  for (let i = 0; i < fullPaths.length; i += BATCH_SIZE) {
+    const chunk = fullPaths.slice(i, i + BATCH_SIZE);
+    const chunkResults = await fetchPrivateBatch(chunk);
+    for (const [key, value] of chunkResults) {
+      allResults.set(key, value);
+    }
+  }
+
+  return filePaths.map((filePath) => {
+    const fullPath = `/content/mcp-bundles/${mcpName}/${bundleName}/${filePath}`;
+    return {
+      path: filePath,
+      content: allResults.get(fullPath) ?? '',
+    };
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Utility
 // ---------------------------------------------------------------------------
 
