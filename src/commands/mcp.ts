@@ -1,12 +1,14 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { execSync } from 'node:child_process';
+import { homedir } from 'node:os';
 import type { GlobalOptions } from '../core/types.js';
-import { listMcps, searchMcps, getMcp, type McpEntry } from '../core/registry.js';
+import { listMcps, searchMcps, getMcp, type McpEntry, type McpBundleInfo } from '../core/registry.js';
 import { fetchMcpBundleFiles } from '../core/private-registry.js';
+import { getSavedTokens, saveTokens, maskToken } from '../core/mcp-tokens.js';
 import { resolveTarget } from '../utils/resolve-target.js';
 import { heading, success, info, warn, error as logError, list } from '../utils/log.js';
-import { input } from '@inquirer/prompts';
+import { input, select } from '@inquirer/prompts';
 import chalk from 'chalk';
 
 // ---------------------------------------------------------------------------
@@ -163,18 +165,40 @@ async function resolvePlaceholders(
     return { args: [...mcp.args], env: mcp.env ? { ...mcp.env } : {} };
   }
 
+  const saved = getSavedTokens(mcp.name);
   const values: Record<string, string> = {};
 
   for (const [key, description] of Object.entries(mcp.placeholders)) {
     if (opts.yes) {
-      warn(`Placeholder {{${key}}} left as-is (non-interactive mode)`);
-      values[key] = `{{${key}}}`;
+      if (saved[key]) {
+        values[key] = saved[key];
+        info(`Using saved value for ${key}`);
+      } else {
+        warn(`Placeholder {{${key}}} left as-is (non-interactive mode)`);
+        values[key] = `{{${key}}}`;
+      }
     } else {
-      values[key] = await input({
-        message: `${key}: ${description}`,
-      });
+      const savedValue = saved[key];
+      if (savedValue) {
+        const answer = await input({
+          message: `${key} (${description}) — press Enter to reuse [${maskToken(savedValue)}]`,
+          default: '',
+        });
+        values[key] = answer || savedValue;
+      } else {
+        values[key] = await input({
+          message: `${key}: ${description}`,
+        });
+      }
     }
   }
+
+  // Persist resolved tokens for next time
+  const toSave: Record<string, string> = {};
+  for (const [k, v] of Object.entries(values)) {
+    if (!v.startsWith('{{')) toSave[k] = v;
+  }
+  if (Object.keys(toSave).length > 0) saveTokens(mcp.name, toSave);
 
   // Replace placeholders in args
   const args = mcp.args.map((arg) => {
@@ -204,19 +228,64 @@ async function resolvePlaceholders(
 // MCP bundle installation
 // ---------------------------------------------------------------------------
 
+type InstallScope = 'project' | 'global';
+
+const GLOBAL_MCP_DIR = join(homedir(), '.imperium', 'mcp-installs');
+
+/** Build a map of bundle dest → actual install path based on scope. */
+function buildBundlePathMap(
+  mcpName: string,
+  bundles: McpBundleInfo[],
+  projectRoot: string,
+  scope: InstallScope,
+): Map<string, string> {
+  const pathMap = new Map<string, string>();
+  for (const bundle of bundles) {
+    const destDir = scope === 'global'
+      ? join(GLOBAL_MCP_DIR, mcpName, bundle.name)
+      : join(projectRoot, bundle.dest);
+    pathMap.set(bundle.dest, destDir);
+  }
+  return pathMap;
+}
+
+/** Rewrite a string value, replacing bundle dest references with actual paths. */
+function rewriteBundlePaths(
+  value: string,
+  bundles: McpBundleInfo[],
+  pathMap: Map<string, string>,
+): string {
+  let result = value;
+  // Sort by dest length descending to avoid partial matches
+  const sorted = [...bundles].sort((a, b) => b.dest.length - a.dest.length);
+  for (const bundle of sorted) {
+    const absPath = pathMap.get(bundle.dest);
+    if (!absPath) continue;
+    result = result.replaceAll(`./${bundle.dest}`, absPath);
+    result = result.replaceAll(bundle.dest, absPath);
+  }
+  return result;
+}
+
 async function installMcpBundles(
   mcpName: string,
   mcp: McpEntry,
   projectRoot: string,
-): Promise<void> {
-  if (!mcp.bundles) return;
+  scope: InstallScope,
+): Promise<Map<string, string>> {
+  const pathMap = new Map<string, string>();
+  if (!mcp.bundles) return pathMap;
+
+  const bundlePathMap = buildBundlePathMap(mcpName, mcp.bundles, projectRoot, scope);
 
   for (const bundle of mcp.bundles) {
-    const destDir = join(projectRoot, bundle.dest);
+    const destDir = bundlePathMap.get(bundle.dest)!;
+    pathMap.set(bundle.dest, destDir);
 
     // Skip if already installed (directory exists with files)
     if (existsSync(destDir)) {
-      info(`  Bundle ${bundle.name} already exists at ${bundle.dest}/, skipping`);
+      const label = scope === 'global' ? destDir : `${bundle.dest}/`;
+      info(`  Bundle ${bundle.name} already exists at ${label}, skipping`);
       continue;
     }
 
@@ -229,7 +298,8 @@ async function installMcpBundles(
       mkdirSync(dirname(filePath), { recursive: true });
       writeFileSync(filePath, file.content, 'utf-8');
     }
-    success(`  ${bundle.name}: ${files.length} files → ${bundle.dest}/`);
+    const label = scope === 'global' ? destDir : `${bundle.dest}/`;
+    success(`  ${bundle.name}: ${files.length} files → ${label}`);
 
     // Run post-install command (e.g., npm install)
     if (bundle.postInstall) {
@@ -247,14 +317,22 @@ async function installMcpBundles(
     }
   }
 
-  // Generate config file if specified
+  // Generate config file if specified (always project-level, rewrite paths for global)
   if (mcp.configFile) {
     const cfgPath = join(projectRoot, mcp.configFile.path);
     if (!existsSync(cfgPath)) {
-      writeFileSync(cfgPath, JSON.stringify(mcp.configFile.content, null, 2) + '\n', 'utf-8');
+      let content = mcp.configFile.content;
+      if (scope === 'global') {
+        const json = JSON.stringify(content);
+        const rewritten = rewriteBundlePaths(json, mcp.bundles, pathMap);
+        content = JSON.parse(rewritten);
+      }
+      writeFileSync(cfgPath, JSON.stringify(content, null, 2) + '\n', 'utf-8');
       success(`  Config written: ${mcp.configFile.path}`);
     }
   }
+
+  return pathMap;
 }
 
 export async function addMcpsCommand(
@@ -287,20 +365,46 @@ export async function addMcpsCommand(
 
       info(`Adding MCP: ${name}...`);
 
-      // Install bundles (download files from R2 and copy to project)
-      if (mcp.bundles && mcp.bundles.length > 0 && !opts.dryRun) {
-        await installMcpBundles(name, mcp, projectRoot);
+      // Determine install scope for MCPs with bundles
+      let scope: InstallScope = 'project';
+      let pathMap = new Map<string, string>();
+
+      if (mcp.bundles && mcp.bundles.length > 0) {
+        if (!opts.yes && !opts.dryRun) {
+          scope = await select({
+            message: 'Install MCP bundles at:',
+            choices: [
+              { name: 'Project level — files in this project only', value: 'project' as InstallScope },
+              { name: `Global — shared across projects (~/.imperium/mcp-installs/)`, value: 'global' as InstallScope },
+            ],
+          });
+        }
+
+        if (!opts.dryRun) {
+          pathMap = await installMcpBundles(name, mcp, projectRoot, scope);
+        }
       }
 
       const { args, env } = await resolvePlaceholders(mcp, opts);
 
+      // Rewrite args/env paths for global scope
+      const finalArgs = scope === 'global' && mcp.bundles
+        ? args.map((a) => rewriteBundlePaths(a, mcp.bundles!, pathMap))
+        : args;
+      const finalEnv: Record<string, string> = {};
+      for (const [k, v] of Object.entries(env)) {
+        finalEnv[k] = scope === 'global' && mcp.bundles
+          ? rewriteBundlePaths(v, mcp.bundles!, pathMap)
+          : v;
+      }
+
       const entry: McpServerEntry = {
         command: mcp.command,
-        args,
+        args: finalArgs,
       };
 
-      if (Object.keys(env).length > 0) {
-        entry.env = env;
+      if (Object.keys(finalEnv).length > 0) {
+        entry.env = finalEnv;
       }
 
       if (opts.dryRun) {
