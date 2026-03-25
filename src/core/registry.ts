@@ -344,6 +344,22 @@ export async function inspectPackage(
 // MCP Registry
 // ---------------------------------------------------------------------------
 
+export interface McpBundleInfo {
+  /** Bundle name (matches the R2 prefix under mcp-bundles/{mcpName}/). */
+  name: string;
+  /** Destination folder in the project root. */
+  dest: string;
+  /** Command to run in the dest folder after files are written. */
+  postInstall?: string;
+}
+
+export interface McpConfigFileInfo {
+  /** Relative path in the project root for the config file. */
+  path: string;
+  /** JSON content to write. */
+  content: Record<string, unknown>;
+}
+
 export interface McpEntry {
   name: string;
   description: string;
@@ -351,6 +367,10 @@ export interface McpEntry {
   args: string[];
   env?: Record<string, string>;
   placeholders?: Record<string, string>;
+  /** Directories to download from R2 and copy into the project. */
+  bundles?: McpBundleInfo[];
+  /** Config file to generate after bundles are installed. */
+  configFile?: McpConfigFileInfo;
   source?: ContentSource;
 }
 
