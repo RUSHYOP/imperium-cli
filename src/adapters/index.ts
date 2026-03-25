@@ -1,5 +1,5 @@
 import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import type { PresetName, ResolvedTarget } from '../core/types.js';
 import type { FetchedPackage } from '../core/registry.js';
 import { verbose, warn } from '../utils/log.js';
@@ -68,9 +68,13 @@ const claudeAdapter: PresetAdapter = {
 
 const githubAdapter: PresetAdapter = {
   scaffold(rootDir) {
+    // .github/instructions & .github/prompts for Copilot config
+    // .vscode for MCP server config (.vscode/mcp.json)
+    const vscodeDir = join(dirname(rootDir), '.vscode');
     const dirs = [
       join(rootDir, 'instructions'),
       join(rootDir, 'prompts'),
+      vscodeDir,
     ];
     dirs.forEach((d) => mkdirSync(d, { recursive: true }));
 
