@@ -128,14 +128,15 @@ export async function applyPreset(
     await addMcpsCommand(preset.mcps, { ...opts, root: rootDir });
   }
 
-  // 3. Copy files
+  // 3. Copy files (relative to project root, not rootDir)
   if (preset.files.length > 0) {
     heading(`Copying ${preset.files.length} file(s) from preset`);
+    const projectRoot = dirname(rootDir);
 
     for (const filePath of preset.files) {
       try {
         const content = await fetchPresetFile(preset.name, filePath);
-        const destPath = join(rootDir, filePath);
+        const destPath = join(projectRoot, filePath);
 
         if (existsSync(destPath) && !opts.force) {
           warn(`${filePath} already exists — use --force to overwrite`);
