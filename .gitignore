@@ -5,6 +5,7 @@ dist/
 .venv/
 .gitnexus
 .wrangler/
+.nuxt/
 
 # Backup files
 *.backup
