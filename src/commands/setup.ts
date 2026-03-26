@@ -63,11 +63,24 @@ export async function setupCommand(
 
   if (opts.dryRun) {
     info(`Would create: ${target.rootDir}`);
+    info(`Would create: ${target.skillsDir}`);
+
+    const preview = adapterObj.previewScaffold(target.rootDir);
+    for (const d of preview.dirs) info(`Would create: ${d}`);
+    for (const f of preview.files) info(`Would write: ${f}`);
+    info(`Would write: ${target.rootDir}/imperium.lock.json`);
+
     if (setupPreset) {
       info(`Would apply preset: ${setupPreset.name}`);
       info(`  Skills: ${setupPreset.skills.join(', ') || 'none'}`);
       info(`  MCPs: ${setupPreset.mcps.join(', ') || 'none'}`);
       info(`  Files: ${setupPreset.files.length}`);
+    }
+    if (opts.with?.length) {
+      info(`Would install skills: ${opts.with.join(', ')}`);
+    }
+    if (opts.instructions?.length) {
+      info(`Would install instructions: ${opts.instructions.join(', ')}`);
     }
     return;
   }
@@ -93,18 +106,21 @@ export async function setupCommand(
     `Lockfile: ${target.rootDir}/imperium.lock.json`,
   ]);
 
+  // Pass resolved target through to child commands
+  const childOpts: GlobalOptions = { ...opts, target: target.preset, root: target.rootDir };
+
   // Apply setup preset (skills, MCPs, files)
   if (setupPreset) {
-    await applyPreset(setupPreset, target.rootDir, opts);
+    await applyPreset(setupPreset, target.rootDir, childOpts);
   }
 
   // Install additional --with skills
   if (opts.with && opts.with.length > 0) {
-    await addCommand(opts.with, { ...opts, root: target.rootDir });
+    await addCommand(opts.with, childOpts);
   }
 
   // Install instruction files via --instructions
   if (opts.instructions && opts.instructions.length > 0) {
-    await addInstructionsCommand(opts.instructions, { ...opts, root: target.rootDir });
+    await addInstructionsCommand(opts.instructions, childOpts);
   }
 }
