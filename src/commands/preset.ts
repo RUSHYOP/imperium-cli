@@ -116,16 +116,19 @@ export async function applyPreset(
   rootDir: string,
   opts: GlobalOptions,
 ): Promise<void> {
+  // Ensure target adapter is passed through to child commands
+  const childOpts: GlobalOptions = { ...opts, root: rootDir, target: (opts.target || preset.adapter) as any };
+
   // 1. Install skills
   if (preset.skills.length > 0) {
     heading(`Installing ${preset.skills.length} skill(s) from preset`);
-    await addCommand(preset.skills, { ...opts, root: rootDir, noFuzzy: true });
+    await addCommand(preset.skills, { ...childOpts, noFuzzy: true });
   }
 
   // 2. Configure MCPs
   if (preset.mcps.length > 0) {
     heading(`Configuring ${preset.mcps.length} MCP(s) from preset`);
-    await addMcpsCommand(preset.mcps, { ...opts, root: rootDir });
+    await addMcpsCommand(preset.mcps, childOpts);
   }
 
   // 3. Copy files (relative to project root, not rootDir)

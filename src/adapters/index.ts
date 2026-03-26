@@ -6,6 +6,8 @@ import { verbose, warn } from '../utils/log.js';
 
 /** Adapter interface: each preset knows how to scaffold and generate native views. */
 export interface PresetAdapter {
+  /** Preview the directories and files that scaffold would create (no side effects). */
+  previewScaffold(rootDir: string): { dirs: string[]; files: string[] };
   /** Create the empty folder scaffold for this preset. */
   scaffold(rootDir: string): string[];
   /** Generate native platform files from an installed skill. */
@@ -17,14 +19,21 @@ export interface PresetAdapter {
 // ---------------------------------------------------------------------------
 
 const claudeAdapter: PresetAdapter = {
+  previewScaffold(rootDir) {
+    return {
+      dirs: [
+        join(rootDir, 'rules'),
+        join(rootDir, 'commands'),
+        join(rootDir, 'agents'),
+        join(rootDir, 'skills'),
+        join(rootDir, 'todos'),
+      ],
+      files: [],
+    };
+  },
+
   scaffold(rootDir) {
-    const dirs = [
-      join(rootDir, 'rules'),
-      join(rootDir, 'commands'),
-      join(rootDir, 'agents'),
-      join(rootDir, 'skills'),
-      join(rootDir, 'todos'),
-    ];
+    const { dirs } = this.previewScaffold(rootDir);
     dirs.forEach((d) => mkdirSync(d, { recursive: true }));
     return dirs;
   },
@@ -67,19 +76,26 @@ const claudeAdapter: PresetAdapter = {
 // ---------------------------------------------------------------------------
 
 const githubAdapter: PresetAdapter = {
-  scaffold(rootDir) {
-    // .github/instructions & .github/prompts for Copilot config
-    // .vscode for MCP server config (.vscode/mcp.json)
+  previewScaffold(rootDir) {
     const vscodeDir = join(dirname(rootDir), '.vscode');
-    const dirs = [
-      join(rootDir, 'instructions'),
-      join(rootDir, 'prompts'),
-      vscodeDir,
-    ];
+    return {
+      dirs: [
+        join(rootDir, 'instructions'),
+        join(rootDir, 'prompts'),
+        vscodeDir,
+      ],
+      files: [
+        join(rootDir, 'copilot-instructions.md'),
+      ],
+    };
+  },
+
+  scaffold(rootDir) {
+    const { dirs, files } = this.previewScaffold(rootDir);
     dirs.forEach((d) => mkdirSync(d, { recursive: true }));
 
     // Create empty copilot-instructions.md if it doesn't exist
-    const mainInstructions = join(rootDir, 'copilot-instructions.md');
+    const mainInstructions = files[0];
     if (!existsSync(mainInstructions)) {
       writeFileSync(
         mainInstructions,
@@ -124,11 +140,18 @@ const githubAdapter: PresetAdapter = {
 // ---------------------------------------------------------------------------
 
 const windsurfAdapter: PresetAdapter = {
+  previewScaffold(rootDir) {
+    return {
+      dirs: [
+        join(rootDir, 'skills'),
+        join(rootDir, 'workflows'),
+      ],
+      files: [],
+    };
+  },
+
   scaffold(rootDir) {
-    const dirs = [
-      join(rootDir, 'skills'),
-      join(rootDir, 'workflows'),
-    ];
+    const { dirs } = this.previewScaffold(rootDir);
     dirs.forEach((d) => mkdirSync(d, { recursive: true }));
     return dirs;
   },
@@ -144,8 +167,15 @@ const windsurfAdapter: PresetAdapter = {
 // ---------------------------------------------------------------------------
 
 const cursorAdapter: PresetAdapter = {
+  previewScaffold(rootDir) {
+    return {
+      dirs: [join(rootDir, 'rules')],
+      files: [],
+    };
+  },
+
   scaffold(rootDir) {
-    const dirs = [join(rootDir, 'rules')];
+    const { dirs } = this.previewScaffold(rootDir);
     dirs.forEach((d) => mkdirSync(d, { recursive: true }));
     return dirs;
   },
@@ -179,8 +209,15 @@ const cursorAdapter: PresetAdapter = {
 // ---------------------------------------------------------------------------
 
 const customAdapter: PresetAdapter = {
+  previewScaffold(rootDir) {
+    return {
+      dirs: [join(rootDir, 'skills')],
+      files: [],
+    };
+  },
+
   scaffold(rootDir) {
-    const dirs = [join(rootDir, 'skills')];
+    const { dirs } = this.previewScaffold(rootDir);
     dirs.forEach((d) => mkdirSync(d, { recursive: true }));
     return dirs;
   },
