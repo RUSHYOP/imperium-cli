@@ -125,10 +125,10 @@ function isGitHubTarget(preset: string): boolean {
 
 function getMcpConfigPath(rootDir: string, preset: string): string {
   if (isGitHubTarget(preset)) {
-    // VS Code / GitHub Copilot: .vscode/mcp.json in project root
+    // GitHub Copilot: .vscode/mcp.json
     return join(dirname(rootDir), '.vscode', 'mcp.json');
   }
-  // All others: .mcp.json in project root (one level above .claude/.windsurf/.cursor)
+  // All others (Claude, Windsurf, Cursor, custom): .mcp.json in project root
   return join(dirname(rootDir), '.mcp.json');
 }
 
@@ -450,10 +450,9 @@ export async function removeMcpsCommand(
 
   const target = await resolveTarget(opts);
   const configPath = getMcpConfigPath(target.rootDir, target.preset);
-  const configName = isGitHubTarget(target.preset) ? '.vscode/mcp.json' : '.mcp.json';
 
   if (!existsSync(configPath)) {
-    logError(`No ${configName} found at ${configPath}`);
+    logError(`No MCP config found at ${configPath}`);
     process.exitCode = 1;
     return;
   }
@@ -463,7 +462,7 @@ export async function removeMcpsCommand(
 
   for (const name of parsed) {
     if (!servers[name]) {
-      warn(`${name} not found in ${configName}`);
+      warn(`${name} not found in MCP config`);
       continue;
     }
 
