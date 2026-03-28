@@ -76,16 +76,27 @@ function apiTreeUrl(cfg: RegistryConfig): string {
   return `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/git/trees/${cfg.branch}?recursive=1`;
 }
 
+/** Build common headers, including GitHub token when available. */
+function githubHeaders(): Record<string, string> {
+  const h: Record<string, string> = {
+    'User-Agent': 'imperium-cli',
+    'Cache-Control': 'no-cache',
+  };
+  const token = process.env.GITHUB_TOKEN;
+  if (token) {
+    h['Authorization'] = `Bearer ${token}`;
+  }
+  return h;
+}
+
 /** Fetch with exponential backoff — handles 429 rate limits and transient 5xx errors. */
 async function fetchWithRetry(
   url: string,
-  maxAttempts = 3,
+  maxAttempts = 5,
 ): Promise<Response> {
   let lastError: Error | undefined;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'imperium-cli', 'Cache-Control': 'no-cache' },
-    });
+    const res = await fetch(url, { headers: githubHeaders() });
 
     if (res.ok) return res;
 
@@ -93,9 +104,9 @@ async function fetchWithRetry(
       const retryAfter = res.headers.get('retry-after');
       const delay = retryAfter
         ? parseInt(retryAfter, 10) * 1000
-        : Math.min(1000 * 2 ** (attempt - 1), 8000);
+        : Math.min(1000 * 2 ** (attempt - 1), 30_000);
       if (attempt < maxAttempts) {
-        warn(`HTTP ${res.status} from GitHub (attempt ${attempt}/${maxAttempts}). Retrying in ${delay / 1000}s...`);
+        warn(`HTTP ${res.status} from GitHub (attempt ${attempt}/${maxAttempts}). Retrying in ${Math.round(delay / 1000)}s...`);
         await new Promise((r) => setTimeout(r, delay));
         continue;
       }
@@ -113,7 +124,25 @@ async function fetchWithRetry(
   throw lastError ?? new Error(`Failed to fetch ${url} after ${maxAttempts} attempts`);
 }
 
-/** Cached fetch for text content. */
+/**
+ * Pre-warm the tree cache so parallel fetchPackage calls don't stampede the API.
+ * Call this once before batch operations.
+ */
+export async function prefetchTree(): Promise<void> {
+  const cfg = getConfig();
+  await fetchJsonCached(apiTreeUrl(cfg), 300_000);
+}
+
+// ---------------------------------------------------------------------------
+// In-flight request deduplication (singleflight pattern)
+// ---------------------------------------------------------------------------
+// When multiple callers request the same URL concurrently, only one HTTP
+// request is made — the rest await the same promise.  This prevents the
+// "thundering herd" that caused the 429 storm when --all fired 118 fetches.
+// ---------------------------------------------------------------------------
+const _inflight = new Map<string, Promise<string>>();
+
+/** Cached fetch for text content — coalesces concurrent requests to the same URL. */
 async function fetchTextCached(url: string, ttl?: number): Promise<string> {
   const cached = getCached(url, ttl);
   if (cached !== null) {
@@ -121,10 +150,26 @@ async function fetchTextCached(url: string, ttl?: number): Promise<string> {
     return cached;
   }
 
-  const res = await fetchWithRetry(url);
-  const text = await res.text();
-  setCache(url, text);
-  return text;
+  // If an identical request is already in-flight, piggyback on it
+  const existing = _inflight.get(url);
+  if (existing) {
+    verbose('Coalescing duplicate request');
+    return existing;
+  }
+
+  const promise = (async () => {
+    const res = await fetchWithRetry(url);
+    const text = await res.text();
+    setCache(url, text);
+    return text;
+  })();
+
+  _inflight.set(url, promise);
+  try {
+    return await promise;
+  } finally {
+    _inflight.delete(url);
+  }
 }
 
 /** Cached fetch for JSON. */
@@ -225,7 +270,7 @@ export async function fetchPackage(
   // 1) Use Trees API to find the package directory and all its files
   type TreeEntry = { path: string; type: string };
   type TreeResponse = { tree: TreeEntry[]; truncated: boolean };
-  const tree = await fetchJsonCached<TreeResponse>(apiTreeUrl(cfg), 60_000);
+  const tree = await fetchJsonCached<TreeResponse>(apiTreeUrl(cfg), 300_000);
 
   if (tree.truncated) {
     warn('GitHub tree API returned a truncated result — some packages may not be visible. Consider running `npx gitnexus analyze` to refresh the local index.');

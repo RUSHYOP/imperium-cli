@@ -1,5 +1,5 @@
 import type { GlobalOptions } from '../core/types.js';
-import { fetchPackage } from '../core/registry.js';
+import { fetchPackage, prefetchTree } from '../core/registry.js';
 import { installPackage } from '../core/installer.js';
 import { resolveTarget } from '../utils/resolve-target.js';
 import { fuzzyMatch } from '../utils/fuzzy.js';
@@ -110,9 +110,26 @@ async function installFlow(
 
   const target = await resolveTarget(opts);
 
-  // Fetch all packages concurrently, then install sequentially to avoid lockfile races
+  // Fetch all packages with concurrency limit to avoid GitHub rate-limits
+  const CONCURRENCY = 10;
   info(`Fetching ${resolved.length} package(s)...`);
-  const fetched = await Promise.allSettled(resolved.map((name) => fetchPackage(name)));
+
+  // Pre-warm the tree cache so parallel fetches don't all hit the API at once
+  try {
+    await prefetchTree();
+  } catch {
+    // non-fatal — individual fetches will retry
+  }
+
+  const fetched: PromiseSettledResult<Awaited<ReturnType<typeof fetchPackage>>>[] = new Array(resolved.length);
+
+  for (let i = 0; i < resolved.length; i += CONCURRENCY) {
+    const batch = resolved.slice(i, i + CONCURRENCY);
+    const batchResults = await Promise.allSettled(batch.map((name) => fetchPackage(name)));
+    for (let j = 0; j < batchResults.length; j++) {
+      fetched[i + j] = batchResults[j]!;
+    }
+  }
 
   for (let i = 0; i < resolved.length; i++) {
     const name = resolved[i]!;
