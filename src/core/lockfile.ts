@@ -1,9 +1,10 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, copyFileSync, rmSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import type { Lockfile, LockEntry, LockInstructionEntry, PresetName } from './types.js';
-import { verbose } from '../utils/log.js';
+import { verbose, warn } from '../utils/log.js';
 
 const LOCKFILE_NAME = 'imperium.lock.json';
+const LOCK_STALE_MS = 10_000; // consider lock stale after 10s
 
 function defaultLockfile(root: string, preset: PresetName | null): Lockfile {
   return {
@@ -30,17 +31,59 @@ export function readLockfile(rootDir: string): Lockfile {
     if (!parsed.instructions) parsed.instructions = {};
     return parsed;
   } catch {
-    verbose(`Corrupt lockfile at ${lockPath}, starting fresh.`);
+    warn(`Corrupt lockfile at ${lockPath} — backed up to ${lockPath}.backup`);
+    try { copyFileSync(lockPath, lockPath + '.backup'); } catch { /* best effort */ }
     return defaultLockfile(rootDir, null);
   }
 }
 
-/** Write the lockfile to disk. */
+/** Acquire a simple advisory lock using mkdir (atomic on all OS). */
+function acquireLock(lockPath: string): boolean {
+  const lockDir = lockPath + '.lock';
+  try {
+    mkdirSync(lockDir);
+    return true;
+  } catch {
+    // Check if stale (older than LOCK_STALE_MS)
+    try {
+      const s = statSync(lockDir);
+      if (Date.now() - s.mtimeMs > LOCK_STALE_MS) {
+        rmSync(lockDir, { recursive: true, force: true });
+        mkdirSync(lockDir);
+        return true;
+      }
+    } catch { /* ignore */ }
+    return false;
+  }
+}
+
+function releaseLock(lockPath: string): void {
+  try { rmSync(lockPath + '.lock', { recursive: true, force: true }); } catch { /* ignore */ }
+}
+
+/** Write the lockfile to disk with advisory file locking. */
 export function writeLockfile(rootDir: string, lock: Lockfile): void {
   const lockPath = join(rootDir, LOCKFILE_NAME);
   mkdirSync(dirname(lockPath), { recursive: true });
-  writeFileSync(lockPath, JSON.stringify(lock, null, 2) + '\n', 'utf-8');
-  verbose(`Wrote lockfile to ${lockPath}`);
+
+  // Acquire advisory lock with retry
+  let acquired = false;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    if (acquireLock(lockPath)) {
+      acquired = true;
+      break;
+    }
+    // Spin-wait briefly (sync — lockfile writes are fast)
+    const start = Date.now();
+    while (Date.now() - start < 200) { /* busy wait */ }
+  }
+
+  try {
+    writeFileSync(lockPath, JSON.stringify(lock, null, 2) + '\n', 'utf-8');
+    verbose(`Wrote lockfile to ${lockPath}`);
+  } finally {
+    if (acquired) releaseLock(lockPath);
+  }
 }
 
 /** Add or update a package entry in the lockfile. */

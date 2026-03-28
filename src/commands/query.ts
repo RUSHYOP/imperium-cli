@@ -10,10 +10,16 @@ import { heading, info, dim, list as logList, success, error as logError } from 
 // ---------------------------------------------------------------------------
 
 export async function listCommand(opts: GlobalOptions, description?: true | string[]): Promise<void> {
-  heading('Available skills');
-
   try {
     const entries = await listPackages(undefined, opts.kind);
+
+    // JSON output mode
+    if (opts.format === 'json') {
+      console.log(JSON.stringify(entries, null, 2));
+      return;
+    }
+
+    heading('Available skills');
 
     if (entries.length === 0) {
       info('No packages found in registry.');
@@ -59,10 +65,16 @@ export async function listCommand(opts: GlobalOptions, description?: true | stri
 // ---------------------------------------------------------------------------
 
 export async function searchCommand(query: string, opts: GlobalOptions): Promise<void> {
-  heading(`Searching for "${query}"`);
-
   try {
     const results = await searchPackages(query);
+
+    // JSON output mode
+    if (opts.format === 'json') {
+      console.log(JSON.stringify(results, null, 2));
+      return;
+    }
+
+    heading(`Searching for "${query}"`);
 
     if (results.length === 0) {
       info('No matching packages found.');
@@ -88,10 +100,16 @@ export async function searchCommand(query: string, opts: GlobalOptions): Promise
 // ---------------------------------------------------------------------------
 
 export async function inspectCommand(name: string, opts: GlobalOptions): Promise<void> {
-  heading(`Inspecting ${name}`);
-
   try {
     const { manifest, content } = await inspectPackage(name);
+
+    // JSON output mode
+    if (opts.format === 'json') {
+      console.log(JSON.stringify({ manifest, content }, null, 2));
+      return;
+    }
+
+    heading(`Inspecting ${name}`);
 
     info(`  Name:        ${chalk.bold(manifest.name)}`);
     info(`  Kind:        ${manifest.kind}`);

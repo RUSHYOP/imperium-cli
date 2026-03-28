@@ -20,6 +20,7 @@ export function warn(msg: string): void {
 }
 
 export function error(msg: string): void {
+  if (_opts.silent) return;
   console.error(chalk.red('✖ ') + msg);
 }
 

@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import type { GlobalOptions, PackageKind, PresetName } from './core/types.js';
 import { setLogOptions } from './utils/log.js';
+import { setCacheDisabled } from './core/cache.js';
 import { fuzzyCommand } from './utils/fuzzy.js';
 import { warn, error as logError, chalk } from './utils/log.js';
 import { readFileSync } from 'node:fs';
@@ -145,7 +146,8 @@ function addQueryFlags(cmd: Command): Command {
 function addOutputFlags(cmd: Command): Command {
   return cmd
     .option('--verbose', 'Show file-by-file actions')
-    .option('--silent', 'Minimal output');
+    .option('--silent', 'Minimal output')
+    .option('--no-cache', 'Bypass cache, fetch fresh data');
 }
 
 /** File filter flags. */
@@ -164,6 +166,7 @@ function extractOpts(cmd: Command): GlobalOptions {
     dryRun: o.dryRun,
     yes: o.yes,
     noFuzzy: o.noFuzzy ?? !o.fuzzy, // --no-fuzzy sets fuzzy=false
+    noCache: o.cache === false,
     verbose: o.verbose,
     silent: o.silent,
     local: o.local,
@@ -180,6 +183,7 @@ function extractOpts(cmd: Command): GlobalOptions {
     format: o.format,
   };
   setLogOptions(opts);
+  if (opts.noCache) setCacheDisabled(true);
   return opts;
 }
 
@@ -200,11 +204,12 @@ const RESOURCE_ALIASES: Record<string, ResourceType> = {
   instruction: 'instructions',
 };
 
-function validateResourceType(type: string): ResourceType {
+function validateResourceType(type: string): ResourceType | undefined {
   const resolved = RESOURCE_ALIASES[type.toLowerCase()];
   if (resolved) return resolved;
   logError(`Unknown resource type '${type}'. Must be: skills, mcps, instructions, or presets`);
-  process.exit(1);
+  process.exitCode = 1;
+  return undefined;
 }
 
 // ---- setup ---------------------------------------------------------------
@@ -243,12 +248,14 @@ function validateResourceType(type: string): ResourceType {
 {
   const cmd = program
     .command('add <type> [names...]')
+    .alias('i')
     .description('Add skills or MCPs to the project')
     .option('--from-file <path>', 'Read names from a file (skills only)')
     .option('--all', 'Add all from the registry (skills only)')
     .option('--path <dir>', 'Target directory to install into')
     .action(async (type: string, names: string[], cmdOpts, cmd: Command) => {
       const resourceType = validateResourceType(type);
+      if (!resourceType) return;
       const opts = extractOpts(cmd);
       if (cmdOpts.path) opts.root = cmdOpts.path;
 
@@ -299,10 +306,12 @@ function validateResourceType(type: string): ResourceType {
 {
   const cmd = program
     .command('list <type>')
+    .alias('ls')
     .description('List available skills, MCPs, instructions, or setup presets')
     .option('-d, --description [items...]', 'Show descriptions (optionally for specific items only)')
     .action(async (type: string, cmdOpts, cmd: Command) => {
       const resourceType = validateResourceType(type);
+      if (!resourceType) return;
       const opts = extractOpts(cmd);
 
       if (resourceType === 'skills') {
@@ -338,9 +347,11 @@ function validateResourceType(type: string): ResourceType {
 {
   const cmd = program
     .command('search <type> <query>')
+    .alias('s')
     .description('Search for skills, MCPs, instructions, or presets matching a keyword')
     .action(async (type: string, query: string, _cmdOpts, cmd: Command) => {
       const resourceType = validateResourceType(type);
+      if (!resourceType) return;
       const opts = extractOpts(cmd);
 
       if (resourceType === 'skills') {
@@ -378,6 +389,7 @@ function validateResourceType(type: string): ResourceType {
     .description('Show full metadata for a skill, MCP, instruction, or setup preset')
     .action(async (type: string, name: string, _cmdOpts, cmd: Command) => {
       const resourceType = validateResourceType(type);
+      if (!resourceType) return;
       const opts = extractOpts(cmd);
 
       if (resourceType === 'skills') {
@@ -435,9 +447,11 @@ function validateResourceType(type: string): ResourceType {
 {
   const cmd = program
     .command('remove <type> <names...>')
+    .alias('rm')
     .description('Remove installed skills, MCPs, or instructions')
     .action(async (type: string, names: string[], _cmdOpts, cmd: Command) => {
       const resourceType = validateResourceType(type);
+      if (!resourceType) return;
 
       if (resourceType === 'presets') {
         logError("Presets can't be removed. Remove individual skills or MCPs instead.");

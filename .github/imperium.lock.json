@@ -12,6 +12,47 @@
       "installedPath": "/Users/admin/Codes/imperium-CLI/.github/skills/Obsidian",
       "installedAt": "2026-03-20T07:21:05.554Z",
       "lastSync": "2026-03-20T07:21:05.554Z"
+    },
+    "rxd-design-system-figma": {
+      "name": "rxd-design-system-figma",
+      "kind": "skill",
+      "version": "0.0.0",
+      "source": "github:RUSHYOP/imperium-cli",
+      "checksum": "5bf29010d64e106b",
+      "installedPath": "/Users/admin/Codes/imperium-CLI/.github/skills/rxd-design-system-figma",
+      "installedAt": "2026-03-26T05:38:30.132Z",
+      "lastSync": "2026-03-26T05:38:30.132Z"
+    },
+    "rautocode-audit": {
+      "name": "rautocode-audit",
+      "kind": "skill",
+      "version": "0.0.0",
+      "source": "github:RUSHYOP/imperium-cli",
+      "checksum": "0e2beeba19a7baf0",
+      "installedPath": "/Users/admin/Codes/imperium-CLI/.github/skills/rautocode-audit",
+      "installedAt": "2026-03-26T05:38:30.133Z",
+      "lastSync": "2026-03-26T05:38:30.133Z"
+    },
+    "figma-page-creation": {
+      "name": "figma-page-creation",
+      "kind": "skill",
+      "version": "0.0.0",
+      "source": "github:RUSHYOP/imperium-cli",
+      "checksum": "16073f72c9657fa8",
+      "installedPath": "/Users/admin/Codes/imperium-CLI/.github/skills/figma-page-creation",
+      "installedAt": "2026-03-26T05:38:30.133Z",
+      "lastSync": "2026-03-26T05:38:30.133Z"
+    },
+    "rxds-figma-mcp": {
+      "name": "rxds-figma-mcp",
+      "kind": "skill",
+      "version": "0.0.0",
+      "source": "github:RUSHYOP/imperium-cli",
+      "checksum": "6912d7e26e28f249",
+      "installedPath": "/Users/admin/Codes/imperium-CLI/.github/skills/rxds-figma-mcp",
+      "installedAt": "2026-03-26T05:38:30.134Z",
+      "lastSync": "2026-03-26T05:38:30.134Z"
     }
-  }
+  },
+  "instructions": {}
 }

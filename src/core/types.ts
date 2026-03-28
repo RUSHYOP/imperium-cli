@@ -73,6 +73,7 @@ export interface GlobalOptions {
   dryRun?: boolean;
   yes?: boolean;
   noFuzzy?: boolean;
+  noCache?: boolean;
   verbose?: boolean;
   silent?: boolean;
   local?: string;
