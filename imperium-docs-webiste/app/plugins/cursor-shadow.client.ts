@@ -1,4 +1,6 @@
 export default defineNuxtPlugin((nuxtApp) => {
+  // Defer non-essential cursor glow effect to after page is interactive
+  const init = () => {
   const style = document.createElement('style')
   style.textContent = `
     #cursor-glow {
@@ -127,4 +129,12 @@ export default defineNuxtPlugin((nuxtApp) => {
     const observer = new MutationObserver(() => tagCards())
     observer.observe(document.body, { childList: true, subtree: true })
   })
+  } // end init
+
+  // Use requestIdleCallback to defer initialization, reducing blocking on page load
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(init, { timeout: 2000 })
+  } else {
+    setTimeout(init, 100)
+  }
 })

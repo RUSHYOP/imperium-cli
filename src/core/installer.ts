@@ -15,11 +15,13 @@ export interface InstallResult {
 
 /**
  * Install a fetched package to the resolved target directory.
+ * When deferLockfile is true, skips the lockfile write (caller is responsible).
  */
 export function installPackage(
   pkg: FetchedPackage,
   target: ResolvedTarget,
   opts: GlobalOptions,
+  deferLockfile = false,
 ): InstallResult {
   const pkgDir = join(target.skillsDir, pkg.manifest.name);
   const filePaths: string[] = [];
@@ -76,23 +78,25 @@ export function installPackage(
     verbose(`Wrote ${filePath}`);
   }
 
-  // Update lockfile
-  const now = new Date().toISOString();
-  const entry: LockEntry = {
-    name: pkg.manifest.name,
-    kind: pkg.manifest.kind,
-    version: pkg.manifest.version,
-    source: 'github:RUSHYOP/imperium-cli',
-    checksum: pkg.checksum,
-    installedPath: pkgDir,
-    installedAt: now,
-    lastSync: now,
-  };
+  // Update lockfile (unless deferred for batch writes)
+  if (!deferLockfile) {
+    const now = new Date().toISOString();
+    const entry: LockEntry = {
+      name: pkg.manifest.name,
+      kind: pkg.manifest.kind,
+      version: pkg.manifest.version,
+      source: 'github:RUSHYOP/imperium-cli',
+      checksum: pkg.checksum,
+      installedPath: pkgDir,
+      installedAt: now,
+      lastSync: now,
+    };
 
-  const updated = upsertLockEntry(lock, entry);
-  updated.preset = updated.preset || target.preset;
-  updated.root = target.rootDir;
-  writeLockfile(target.rootDir, updated);
+    const updated = upsertLockEntry(lock, entry);
+    updated.preset = updated.preset || target.preset;
+    updated.root = target.rootDir;
+    writeLockfile(target.rootDir, updated);
+  }
 
   return {
     name: pkg.manifest.name,

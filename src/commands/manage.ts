@@ -1,7 +1,7 @@
 import type { GlobalOptions } from '../core/types.js';
-import { fetchPackage } from '../core/registry.js';
+import { fetchPackage, prefetchTree } from '../core/registry.js';
 import { installPackage, removePackage } from '../core/installer.js';
-import { readLockfile, writeLockfile } from '../core/lockfile.js';
+import { readLockfile } from '../core/lockfile.js';
 import { getAdapter } from '../adapters/index.js';
 import { resolveTarget } from '../utils/resolve-target.js';
 import { heading, success, warn, info, error as logError, verbose } from '../utils/log.js';
@@ -33,25 +33,57 @@ export async function updateCommand(
 
   heading(`Updating ${toUpdate.length} package(s)`);
 
-  for (const name of toUpdate) {
+  // Pre-warm the tree cache for parallel fetching
+  try {
+    await prefetchTree();
+  } catch {
+    // non-fatal
+  }
+
+  // Fetch all packages in parallel with concurrency limit
+  const CONCURRENCY = 10;
+  const fetched: PromiseSettledResult<Awaited<ReturnType<typeof fetchPackage>>>[] = new Array(toUpdate.length);
+
+  for (let i = 0; i < toUpdate.length; i += CONCURRENCY) {
+    const batch = toUpdate.slice(i, i + CONCURRENCY);
+    const batchResults = await Promise.allSettled(batch.map((name) => fetchPackage(name)));
+    for (let j = 0; j < batchResults.length; j++) {
+      fetched[i + j] = batchResults[j]!;
+    }
+  }
+
+  let updated = 0;
+  let failed = 0;
+
+  for (let i = 0; i < toUpdate.length; i++) {
+    const name = toUpdate[i]!;
+
     if (!lock.packages[name]) {
       warn(`${name}: not installed, skipping.`);
       continue;
     }
 
+    const result = fetched[i]!;
+
+    if (result.status === 'rejected') {
+      logError(`${name}: ${result.reason?.message ?? result.reason}`);
+      failed++;
+      continue;
+    }
+
     try {
-      info(`Checking ${name}...`);
-      const pkg = await fetchPackage(name);
+      const pkg = result.value;
 
       if (pkg.checksum === lock.packages[name].checksum) {
         verbose(`${name}: already up to date.`);
         continue;
       }
 
-      const result = installPackage(pkg, target, { ...opts, force: true });
+      const installResult = installPackage(pkg, target, { ...opts, force: true });
 
-      if (result.installed) {
+      if (installResult.installed) {
         success(`${name} updated to v${pkg.manifest.version}`);
+        updated++;
 
         // Re-render native files
         const adapter = getAdapter(target.preset);
@@ -59,7 +91,19 @@ export async function updateCommand(
       }
     } catch (err: any) {
       logError(`${name}: ${err.message}`);
+      failed++;
     }
+  }
+
+  if (toUpdate.length > 1) {
+    const parts: string[] = [];
+    if (updated > 0) parts.push(`✔ ${updated} updated`);
+    if (failed > 0) parts.push(`✖ ${failed} failed`);
+    if (parts.length > 0) info(`\n${parts.join('  ')}`);
+  }
+
+  if (failed > 0) {
+    process.exitCode = 1;
   }
 }
 
