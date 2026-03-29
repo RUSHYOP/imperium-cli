@@ -5,7 +5,7 @@
  */
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import matter from 'gray-matter';
 
 interface RegistryEntry {
@@ -30,7 +30,7 @@ const entries: RegistryEntry[] = [];
 /** Check if a path is git-ignored (private content). */
 function isGitIgnored(relPath: string): boolean {
   try {
-    execSync(`git check-ignore -q ${relPath}`, { cwd: ROOT, stdio: 'pipe' });
+    execFileSync('git', ['check-ignore', '-q', '--', relPath], { cwd: ROOT, stdio: 'pipe' });
     return true;
   } catch {
     return false;
