@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import type { GlobalOptions } from '../core/types.js';
 import { listMcps, searchMcps, getMcp, type McpEntry, type McpBundleInfo } from '../core/registry.js';
@@ -301,18 +301,24 @@ async function installMcpBundles(
     const label = scope === 'global' ? destDir : `${bundle.dest}/`;
     success(`  ${bundle.name}: ${files.length} files → ${label}`);
 
-    // Run post-install command (e.g., npm install)
+    // Run post-install command (e.g., npm install) — allowlisted only
     if (bundle.postInstall) {
-      info(`  Running: ${bundle.postInstall}...`);
-      try {
-        execSync(bundle.postInstall, {
-          cwd: destDir,
-          stdio: 'inherit',
-          timeout: 120_000,
-        });
-        success(`  Post-install complete`);
-      } catch (err: any) {
-        warn(`  Post-install failed: ${err.message}`);
+      const allowed = ['npm install', 'npm ci', 'yarn install', 'pnpm install'];
+      if (allowed.includes(bundle.postInstall)) {
+        const [cmd, ...args] = bundle.postInstall.split(' ');
+        info(`  Running: ${bundle.postInstall}...`);
+        try {
+          execFileSync(cmd, args, {
+            cwd: destDir,
+            stdio: 'inherit',
+            timeout: 120_000,
+          });
+          success(`  Post-install complete`);
+        } catch (err: any) {
+          warn(`  Post-install failed: ${err.message}`);
+        }
+      } else {
+        warn(`  Skipping unrecognised post-install command: ${bundle.postInstall}`);
       }
     }
   }
